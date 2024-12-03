@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Basketball Tracker</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+    .button-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+    .button-grid button { padding: 10px 20px; font-size: 16px; }
+    #players { display: none; margin-top: 20px; }
+    #timeInput { display: none; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Basketball Tracker</h1>
+  
+  <!-- Action Buttons -->
+  <div class="button-grid" id="actions">
+    <button onclick="selectAction('shot make')">Shot Make</button>
+    <button onclick="selectAction('shot miss')">Shot Miss</button>
+    <button onclick="selectAction('rebound')">Rebound</button>
+    <button onclick="selectAction('block')">Block</button>
+    <button onclick="selectAction('steal')">Steal</button>
+    <button onclick="selectAction('turnover')">Turnover</button>
+    <button onclick="selectAction('foul')">Foul</button>
+    <button onclick="selectAction('sub in')">Sub In</button>
+    <button onclick="selectAction('sub out')">Sub Out</button>
+    <button onclick="selectAction('record game time')">Record Game Time</button>
+  </div>
+
+  <!-- Player Selection -->
+  <div id="players">
+    <h3>Select Player</h3>
+    <div class="button-grid">
+      <button onclick="recordAction(1)">Player 1</button>
+      <button onclick="recordAction(2)">Player 2</button>
+      <button onclick="recordAction(3)">Player 3</button>
+      <button onclick="recordAction(4)">Player 4</button>
+      <button onclick="recordAction(5)">Player 5</button>
+    </div>
+  </div>
+
+  <!-- Time Input -->
+  <div id="timeInput">
+    <h3>Enter Game Time</h3>
+    <input type="text" id="gameTime" placeholder="MM:SS">
+    <button onclick="recordGameTime()">Submit Time</button>
+  </div>
+
+  <!-- Print DB -->
+  <button style="margin-top: 20px;" onclick="printDatabase()">Print Full Database</button>
+
+  <script>
+    let currentAction = null;
+    let db;
+
+    // Open IndexedDB
+    const request = indexedDB.open("BasketballTrackerDB", 1);
+    request.onupgradeneeded = (event) => {
+      db = event.target.result;
+      db.createObjectStore("actions", { autoIncrement: true });
+    };
+    request.onsuccess = (event) => {
+      db = event.target.result;
+    };
+
+    // Handle action selection
+    function selectAction(action) {
+      currentAction = action;
+      document.getElementById("players").style.display = action === "record game time" ? "none" : "block";
+      document.getElementById("timeInput").style.display = action === "record game time" ? "block" : "none";
+    }
+
+    // Record player action
+    function recordAction(player) {
+      const data = { action: currentAction, player: player, timestamp: new Date().toISOString() };
+      console.log("Recorded:", data);
+
+      const transaction = db.transaction("actions", "readwrite");
+      const store = transaction.objectStore("actions");
+      store.add(data);
+    }
+
+    // Record game time
+    function recordGameTime() {
+      const time = document.getElementById("gameTime").value;
+      if (!time) {
+        alert("Please enter a valid time!");
+        return;
+      }
+      const data = { action: "record game time", time: time, timestamp: new Date().toISOString() };
+      console.log("Recorded:", data);
+
+      const transaction = db.transaction("actions", "readwrite");
+      const store = transaction.objectStore("actions");
+      store.add(data);
+    }
+
+    // Print full database
+    function printDatabase() {
+      const transaction = db.transaction("actions", "readonly");
+      const store = transaction.objectStore("actions");
+      const request = store.getAll();
+
+      request.onsuccess = (event) => {
+        console.log("Full Database:", event.target.result);
+      };
+    }
+  </script>
+</body>
+</html>
