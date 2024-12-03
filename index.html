@@ -9,7 +9,8 @@
     .button-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
     .button-grid button { padding: 10px 20px; font-size: 16px; }
     #details, #players, #timeInput { display: none; margin-top: 20px; }
-    .cancel-btn { margin-top: 20px; color: red; cursor: pointer; }
+    .cancel-btn { margin-top: 20px; background-color: #f44336; color: white; border: none; padding: 10px 20px; cursor: pointer; font-size: 16px; }
+    .cancel-btn:hover { background-color: #d32f2f; }
   </style>
 </head>
 <body>
@@ -33,7 +34,7 @@
   <div id="details">
     <h3 id="detailPrompt">Select Detail</h3>
     <div class="button-grid" id="detailOptions"></div>
-    <div class="cancel-btn" onclick="resetUI()">Cancel / Start Over</div>
+    <button class="cancel-btn" onclick="resetUI()">Start Over</button>
   </div>
 
   <!-- Player Selection -->
@@ -47,7 +48,7 @@
       <button onclick="recordAction(5)">Player 5</button>
       <button onclick="recordAction('Team')">Team</button>
     </div>
-    <div class="cancel-btn" onclick="resetUI()">Cancel / Start Over</div>
+    <button class="cancel-btn" onclick="resetUI()">Start Over</button>
   </div>
 
   <!-- Time Input -->
@@ -55,7 +56,7 @@
     <h3>Enter Game Time</h3>
     <input type="text" id="gameTime" placeholder="MM:SS">
     <button onclick="recordGameTime()">Submit Time</button>
-    <div class="cancel-btn" onclick="resetUI()">Cancel / Start Over</div>
+    <button class="cancel-btn" onclick="resetUI()">Start Over</button>
   </div>
 
   <!-- Print DB -->
