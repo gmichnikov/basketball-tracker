@@ -45,6 +45,7 @@
       <button onclick="recordAction(3)">Player 3</button>
       <button onclick="recordAction(4)">Player 4</button>
       <button onclick="recordAction(5)">Player 5</button>
+      <button onclick="recordAction('Team')">Team</button>
     </div>
     <div class="cancel-btn" onclick="resetUI()">Cancel / Start Over</div>
   </div>
@@ -62,12 +63,12 @@
 
   <script>
     let currentAction = null;
-    let detail1 = null; // To hold points (free throw, 2, 3)
-    let detail2 = null; // To hold shot location or type
+    let detail1 = null; // To hold primary detail (points, offense/defense, etc.)
+    let detail2 = null; // To hold secondary detail (type of shot, turnover type, etc.)
     let db;
 
     // Open IndexedDB
-    const request = indexedDB.open("BasketballTrackerDB", 3);
+    const request = indexedDB.open("BasketballTrackerDB", 5);
     request.onupgradeneeded = (event) => {
       db = event.target.result;
       if (!db.objectStoreNames.contains("actions")) {
@@ -95,8 +96,15 @@
       detail1 = null;
       detail2 = null;
       document.getElementById("actions").style.display = "none";
+
       if (action.startsWith("shot")) {
         showDetailOptions("Points", ["Free Throw", "2-Pointer", "3-Pointer"]);
+      } else if (action === "rebound") {
+        showDetailOptions("Rebound Type", ["Offensive", "Defensive"]);
+      } else if (action === "turnover") {
+        showDetailOptions("Turnover Type", ["Ball Stolen", "Traveling", "Out of Bounds", "Double Dribble", "Other"]);
+      } else if (action === "foul") {
+        showDetailOptions("Foul Type", ["Offensive", "Defensive"]);
       } else if (action === "record game time") {
         document.getElementById("timeInput").style.display = "block";
       } else {
@@ -122,14 +130,14 @@
     function handleDetailSelection(option) {
       if (!detail1) {
         detail1 = option;
-        if (option === "2-Pointer") {
+        if (currentAction.startsWith("shot") && detail1 === "2-Pointer") {
           showDetailOptions("Shot Type", [
             "Lay Up", "Paint - Near", "Paint - Far",
             "Mid-Range - Left Baseline", "Mid-Range - Right Baseline",
             "Mid-Range - Left Wing", "Mid-Range - Right Wing",
             "Mid-Range - Top of the Key"
           ]);
-        } else if (option === "3-Pointer") {
+        } else if (currentAction.startsWith("shot") && detail1 === "3-Pointer") {
           showDetailOptions("Shot Type", [
             "Three-Point - Left Corner", "Three-Point - Right Corner",
             "Three-Point - Left Wing", "Three-Point - Right Wing",
