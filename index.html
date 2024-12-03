@@ -9,6 +9,7 @@
     .button-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
     .button-grid button { padding: 10px 20px; font-size: 16px; }
     #details, #players, #timeInput { display: none; margin-top: 20px; }
+    .cancel-btn { margin-top: 20px; color: red; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -32,6 +33,7 @@
   <div id="details">
     <h3 id="detailPrompt">Select Detail</h3>
     <div class="button-grid" id="detailOptions"></div>
+    <div class="cancel-btn" onclick="resetUI()">Cancel / Start Over</div>
   </div>
 
   <!-- Player Selection -->
@@ -44,6 +46,7 @@
       <button onclick="recordAction(4)">Player 4</button>
       <button onclick="recordAction(5)">Player 5</button>
     </div>
+    <div class="cancel-btn" onclick="resetUI()">Cancel / Start Over</div>
   </div>
 
   <!-- Time Input -->
@@ -51,6 +54,7 @@
     <h3>Enter Game Time</h3>
     <input type="text" id="gameTime" placeholder="MM:SS">
     <button onclick="recordGameTime()">Submit Time</button>
+    <div class="cancel-btn" onclick="resetUI()">Cancel / Start Over</div>
   </div>
 
   <!-- Print DB -->
@@ -63,7 +67,7 @@
     let db;
 
     // Open IndexedDB
-    const request = indexedDB.open("BasketballTrackerDB", 2);
+    const request = indexedDB.open("BasketballTrackerDB", 3);
     request.onupgradeneeded = (event) => {
       db = event.target.result;
       if (!db.objectStoreNames.contains("actions")) {
@@ -74,15 +78,23 @@
       db = event.target.result;
     };
 
+    // Reset UI to show actions
+    function resetUI() {
+      currentAction = null;
+      detail1 = null;
+      detail2 = null;
+      document.getElementById("actions").style.display = "flex";
+      document.getElementById("details").style.display = "none";
+      document.getElementById("players").style.display = "none";
+      document.getElementById("timeInput").style.display = "none";
+    }
+
     // Handle action selection
     function selectAction(action) {
       currentAction = action;
       detail1 = null;
       detail2 = null;
-      document.getElementById("players").style.display = "none";
-      document.getElementById("timeInput").style.display = "none";
-      document.getElementById("details").style.display = action.startsWith("shot") ? "block" : "none";
-
+      document.getElementById("actions").style.display = "none";
       if (action.startsWith("shot")) {
         showDetailOptions("Points", ["Free Throw", "2-Pointer", "3-Pointer"]);
       } else if (action === "record game time") {
@@ -94,6 +106,7 @@
 
     // Show detail options
     function showDetailOptions(prompt, options) {
+      document.getElementById("details").style.display = "block";
       document.getElementById("detailPrompt").innerText = `Select ${prompt}`;
       const detailOptions = document.getElementById("detailOptions");
       detailOptions.innerHTML = "";
@@ -123,13 +136,13 @@
             "Three-Point - Top of the Arc"
           ]);
         } else {
-          document.getElementById("players").style.display = "block";
           document.getElementById("details").style.display = "none";
+          document.getElementById("players").style.display = "block";
         }
       } else {
         detail2 = option;
-        document.getElementById("players").style.display = "block";
         document.getElementById("details").style.display = "none";
+        document.getElementById("players").style.display = "block";
       }
     }
 
@@ -141,6 +154,8 @@
       const transaction = db.transaction("actions", "readwrite");
       const store = transaction.objectStore("actions");
       store.add(data);
+
+      resetUI(); // Reset UI to main actions
     }
 
     // Record game time
@@ -156,6 +171,8 @@
       const transaction = db.transaction("actions", "readwrite");
       const store = transaction.objectStore("actions");
       store.add(data);
+
+      resetUI(); // Reset UI to main actions
     }
 
     // Print full database
@@ -168,6 +185,9 @@
         console.log("Full Database:", event.target.result);
       };
     }
+
+    // Initialize UI
+    resetUI();
   </script>
 </body>
 </html>
