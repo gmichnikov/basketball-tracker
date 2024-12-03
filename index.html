@@ -8,8 +8,7 @@
     body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
     .button-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
     .button-grid button { padding: 10px 20px; font-size: 16px; }
-    #players { display: none; margin-top: 20px; }
-    #timeInput { display: none; margin-top: 20px; }
+    #details, #players, #timeInput { display: none; margin-top: 20px; }
   </style>
 </head>
 <body>
@@ -27,6 +26,12 @@
     <button onclick="selectAction('sub in')">Sub In</button>
     <button onclick="selectAction('sub out')">Sub Out</button>
     <button onclick="selectAction('record game time')">Record Game Time</button>
+  </div>
+
+  <!-- Detail Selection -->
+  <div id="details">
+    <h3 id="detailPrompt">Select Detail</h3>
+    <div class="button-grid" id="detailOptions"></div>
   </div>
 
   <!-- Player Selection -->
@@ -53,13 +58,17 @@
 
   <script>
     let currentAction = null;
+    let detail1 = null; // To hold points (free throw, 2, 3)
+    let detail2 = null; // To hold shot location or type
     let db;
 
     // Open IndexedDB
-    const request = indexedDB.open("BasketballTrackerDB", 1);
+    const request = indexedDB.open("BasketballTrackerDB", 2);
     request.onupgradeneeded = (event) => {
       db = event.target.result;
-      db.createObjectStore("actions", { autoIncrement: true });
+      if (!db.objectStoreNames.contains("actions")) {
+        db.createObjectStore("actions", { autoIncrement: true });
+      }
     };
     request.onsuccess = (event) => {
       db = event.target.result;
@@ -68,13 +77,65 @@
     // Handle action selection
     function selectAction(action) {
       currentAction = action;
-      document.getElementById("players").style.display = action === "record game time" ? "none" : "block";
-      document.getElementById("timeInput").style.display = action === "record game time" ? "block" : "none";
+      detail1 = null;
+      detail2 = null;
+      document.getElementById("players").style.display = "none";
+      document.getElementById("timeInput").style.display = "none";
+      document.getElementById("details").style.display = action.startsWith("shot") ? "block" : "none";
+
+      if (action.startsWith("shot")) {
+        showDetailOptions("Points", ["Free Throw", "2-Pointer", "3-Pointer"]);
+      } else if (action === "record game time") {
+        document.getElementById("timeInput").style.display = "block";
+      } else {
+        document.getElementById("players").style.display = "block";
+      }
+    }
+
+    // Show detail options
+    function showDetailOptions(prompt, options) {
+      document.getElementById("detailPrompt").innerText = `Select ${prompt}`;
+      const detailOptions = document.getElementById("detailOptions");
+      detailOptions.innerHTML = "";
+      options.forEach(option => {
+        const button = document.createElement("button");
+        button.textContent = option;
+        button.onclick = () => handleDetailSelection(option);
+        detailOptions.appendChild(button);
+      });
+    }
+
+    // Handle detail selection
+    function handleDetailSelection(option) {
+      if (!detail1) {
+        detail1 = option;
+        if (option === "2-Pointer") {
+          showDetailOptions("Shot Type", [
+            "Lay Up", "Paint - Near", "Paint - Far",
+            "Mid-Range - Left Baseline", "Mid-Range - Right Baseline",
+            "Mid-Range - Left Wing", "Mid-Range - Right Wing",
+            "Mid-Range - Top of the Key"
+          ]);
+        } else if (option === "3-Pointer") {
+          showDetailOptions("Shot Type", [
+            "Three-Point - Left Corner", "Three-Point - Right Corner",
+            "Three-Point - Left Wing", "Three-Point - Right Wing",
+            "Three-Point - Top of the Arc"
+          ]);
+        } else {
+          document.getElementById("players").style.display = "block";
+          document.getElementById("details").style.display = "none";
+        }
+      } else {
+        detail2 = option;
+        document.getElementById("players").style.display = "block";
+        document.getElementById("details").style.display = "none";
+      }
     }
 
     // Record player action
     function recordAction(player) {
-      const data = { action: currentAction, player: player, timestamp: new Date().toISOString() };
+      const data = { action: currentAction, player: player, detail1: detail1, detail2: detail2, timestamp: new Date().toISOString() };
       console.log("Recorded:", data);
 
       const transaction = db.transaction("actions", "readwrite");
