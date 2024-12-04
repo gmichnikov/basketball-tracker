@@ -75,6 +75,15 @@
   <!-- Game Setup Tab -->
   <div id="game-setup" class="content">
     <h2>Game Setup</h2>
+
+    <br>
+    <button onclick="saveGame()">Save</button>
+    <button onclick="loadGame()">Load</button>
+    <button onclick="clearFields()">Clear</button>
+    <button style="margin-top: 20px;" onclick="printGameDatabase()">Print Game Database</button>
+    <button style="margin-top: 20px;" onclick="clearGameDatabase()">Clear Game Database</button>
+    <br>
+
     <label for="game-id">Game ID:</label>
     <input type="text" id="game-id" placeholder="Enter Game ID"><br>
     <label for="game-date">Date:</label>
@@ -95,12 +104,6 @@
       <div id="team2-players"></div>
       <button onclick="addPlayerRow('team2')">Add Player</button>
     </div>
-
-    <button onclick="saveGame()">Save</button>
-    <button onclick="loadGame()">Load</button>
-    <button onclick="clearFields()">Clear</button>
-    <button style="margin-top: 20px;" onclick="printGameDatabase()">Print Game Database</button>
-    <button style="margin-top: 20px;" onclick="clearGameDatabase()">Clear Game Database</button>
   </div>
 
   <script>
@@ -162,6 +165,7 @@
       }
     }
 
+
     function showPlayerButtons() {
       const playersContainer = document.getElementById("players");
       playersContainer.innerHTML = ""; // Clear existing buttons
@@ -170,11 +174,18 @@
       const store = transaction.objectStore("games");
       const gameId = document.getElementById("game-id").value;
     
+      if (!gameId) {
+        alert("Please enter and load a valid Game ID before tracking.");
+        resetUI();
+        return;
+      }
+    
       const request = store.get(gameId);
       request.onsuccess = (event) => {
         const gameData = event.target.result;
         if (!gameData) {
           alert("No game data found for the given Game ID.");
+          resetUI();
           return;
         }
     
@@ -188,11 +199,11 @@
         team1Button.textContent = "Team";
         team1Button.onclick = () => recordAction(gameData.team1.name, null);
         playersContainer.appendChild(team1Button);
-    
-        // Individual player buttons for Team 1
+
         gameData.team1.players.forEach(player => {
           const button = document.createElement("button");
-          button.textContent = `${player.number || ""} ${player.name || ""}`.trim();
+          const status = player.status === "in" ? " (In)" : " (Out)";
+          button.textContent = `${player.number || ""} ${player.name || ""}${status}`.trim();
           button.onclick = () => recordAction(gameData.team1.name, player.number);
           playersContainer.appendChild(button);
         });
@@ -201,25 +212,26 @@
         const team2Header = document.createElement("h4");
         team2Header.textContent = gameData.team2.name || "Team 2";
         playersContainer.appendChild(team2Header);
-    
+
         // "Team" button for Team 2
         const team2Button = document.createElement("button");
         team2Button.textContent = "Team";
         team2Button.onclick = () => recordAction(gameData.team2.name, null);
         playersContainer.appendChild(team2Button);
-    
-        // Individual player buttons for Team 2
+
         gameData.team2.players.forEach(player => {
           const button = document.createElement("button");
-          button.textContent = `${player.number || ""} ${player.name || ""}`.trim();
+          const status = player.status === "in" ? " (In)" : " (Out)";
+          button.textContent = `${player.number || ""} ${player.name || ""}${status}`.trim();
           button.onclick = () => recordAction(gameData.team2.name, player.number);
           playersContainer.appendChild(button);
         });
     
         // Show player section
-        document.getElementById("players").style.display = "block";
+        playersContainer.style.display = "block";
       };
     }
+
 
 
     function showDetailOptions(prompt, options) {
@@ -277,8 +289,35 @@
       const store = transaction.objectStore("actions");
       store.add(data);
     
+      // Update player status for substitutions
+      const action = currentAction;
+      if (currentAction === "sub in" || currentAction === "sub out") {
+        const gameTransaction = db.transaction("games", "readwrite");
+        const gameStore = gameTransaction.objectStore("games");
+        const gameId = document.getElementById("game-id").value;
+    
+        const gameRequest = gameStore.get(gameId);
+        gameRequest.onsuccess = (event) => {
+          const gameData = event.target.result;
+          if (!gameData) return;
+    
+          const teamKey = gameData.team1.name === teamName ? "team1" : "team2";
+
+          const players = gameData[teamKey].players.map(player => {
+            if (player.number === jerseyNumber) {
+              return { ...player, status: action === "sub in" ? "in" : "out" };
+            }
+            return player;
+          });
+    
+          gameData[teamKey].players = players;
+          gameStore.put(gameData);
+        };
+      }
+    
       resetUI(); // Reset UI to main actions
     }
+
 
     function recordGameTime() {
       const time = document.getElementById("gameTime").value;
@@ -348,13 +387,22 @@
 
     function saveGame() {
       const gameId = document.getElementById('game-id').value;
-      if (!gameId) { alert('Game ID is required to save.'); return; }
+      if (!gameId) {
+        alert('Game ID is required to save.');
+        return;
+      }
       const gameData = {
         game_id: gameId,
         date: document.getElementById('game-date').value,
         location: document.getElementById('game-location').value,
-        team1: { name: document.getElementById('team1-name').value, players: getPlayers('team1') },
-        team2: { name: document.getElementById('team2-name').value, players: getPlayers('team2') },
+        team1: {
+          name: document.getElementById('team1-name').value,
+          players: getPlayers('team1').map(player => ({ ...player, status: player.status || "out" }))
+        },
+        team2: {
+          name: document.getElementById('team2-name').value,
+          players: getPlayers('team2').map(player => ({ ...player, status: player.status || "out" }))
+        },
       };
       const transaction = db.transaction('games', 'readwrite');
       transaction.objectStore('games').put(gameData);
@@ -363,12 +411,18 @@
 
     function loadGame() {
       const gameId = document.getElementById('game-id').value;
-      if (!gameId) { alert('Enter Game ID to load.'); return; }
+      if (!gameId) {
+        alert('Enter Game ID to load.');
+        return;
+      }
       const transaction = db.transaction('games', 'readonly');
       const request = transaction.objectStore('games').get(gameId);
       request.onsuccess = (event) => {
         const gameData = event.target.result;
-        if (!gameData) { alert('No game found.'); return; }
+        if (!gameData) {
+          alert('No game found.');
+          return;
+        }
         document.getElementById('game-date').value = gameData.date;
         document.getElementById('game-location').value = gameData.location;
         document.getElementById('team1-name').value = gameData.team1.name;
@@ -377,6 +431,7 @@
         setPlayers('team2', gameData.team2.players);
       };
     }
+
 
     function clearFields() {
       document.getElementById('game-id').value = '';
