@@ -5,82 +5,142 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Basketball Tracker</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .tab { display: flex; gap: 10px; cursor: pointer; margin-bottom: 20px; }
+    .tab button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+    .tab button.active { background-color: #007bff; color: white; }
+    .content { display: none; }
+    .content.active { display: block; }
     .button-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
     .button-grid button { padding: 10px 20px; font-size: 16px; }
     #details, #players, #timeInput { display: none; margin-top: 20px; }
     .cancel-btn { margin-top: 20px; background-color: #f44336; color: white; border: none; padding: 10px 20px; cursor: pointer; font-size: 16px; }
     .cancel-btn:hover { background-color: #d32f2f; }
+    .team-section { margin: 20px 0; }
+    .team-section h3 { margin-bottom: 10px; }
+    .player-row { display: flex; gap: 10px; margin-bottom: 5px; }
+    .player-row input { width: 45%; padding: 5px; }
   </style>
 </head>
 <body>
   <h1>Basketball Tracker</h1>
-  
-  <!-- Action Buttons -->
-  <div class="button-grid" id="actions">
-    <button onclick="selectAction('shot make')">Shot Make</button>
-    <button onclick="selectAction('shot miss')">Shot Miss</button>
-    <button onclick="selectAction('rebound')">Rebound</button>
-    <button onclick="selectAction('block')">Block</button>
-    <button onclick="selectAction('steal')">Steal</button>
-    <button onclick="selectAction('turnover')">Turnover</button>
-    <button onclick="selectAction('foul')">Foul</button>
-    <button onclick="selectAction('sub in')">Sub In</button>
-    <button onclick="selectAction('sub out')">Sub Out</button>
-    <button onclick="selectAction('record game time')">Record Game Time</button>
+
+  <!-- Tabs -->
+  <div class="tab">
+    <button onclick="showTab('tracking')" id="tab-tracking" class="active">Tracking</button>
+    <button onclick="showTab('game-setup')" id="tab-game-setup">Game Setup</button>
   </div>
 
-  <!-- Detail Selection -->
-  <div id="details">
-    <h3 id="detailPrompt">Select Detail</h3>
-    <div class="button-grid" id="detailOptions"></div>
-    <button class="cancel-btn" onclick="resetUI()">Start Over</button>
-  </div>
+  <!-- Tracking Tab -->
+  <div id="tracking" class="content active">
+    <h2>Stat Tracking</h2>
 
-  <!-- Player Selection -->
-  <div id="players">
-    <h3>Select Player</h3>
-    <div class="button-grid">
-      <button onclick="recordAction(1)">Player 1</button>
-      <button onclick="recordAction(2)">Player 2</button>
-      <button onclick="recordAction(3)">Player 3</button>
-      <button onclick="recordAction(4)">Player 4</button>
-      <button onclick="recordAction(5)">Player 5</button>
-      <button onclick="recordAction('Team')">Team</button>
+    <!-- Action Buttons -->
+    <div class="button-grid" id="actions">
+      <button onclick="selectAction('shot make')">Shot Make</button>
+      <button onclick="selectAction('shot miss')">Shot Miss</button>
+      <button onclick="selectAction('rebound')">Rebound</button>
+      <button onclick="selectAction('block')">Block</button>
+      <button onclick="selectAction('steal')">Steal</button>
+      <button onclick="selectAction('turnover')">Turnover</button>
+      <button onclick="selectAction('foul')">Foul</button>
+      <button onclick="selectAction('sub in')">Sub In</button>
+      <button onclick="selectAction('sub out')">Sub Out</button>
+      <button onclick="selectAction('record game time')">Record Game Time</button>
     </div>
-    <button class="cancel-btn" onclick="resetUI()">Start Over</button>
+
+    <!-- Detail Selection -->
+    <div id="details">
+      <h3 id="detailPrompt">Select Detail</h3>
+      <div class="button-grid" id="detailOptions"></div>
+      <button class="cancel-btn" onclick="resetUI()">Start Over</button>
+    </div>
+
+    <!-- Player Selection -->
+    <div id="players">
+      <h3>Select Player</h3>
+      <div class="button-grid">
+        <button onclick="recordAction(1)">Player 1</button>
+        <button onclick="recordAction(2)">Player 2</button>
+        <button onclick="recordAction(3)">Player 3</button>
+        <button onclick="recordAction(4)">Player 4</button>
+        <button onclick="recordAction(5)">Player 5</button>
+        <button onclick="recordAction('Team')">Team</button>
+      </div>
+      <button class="cancel-btn" onclick="resetUI()">Start Over</button>
+    </div>
+
+    <!-- Time Input -->
+    <div id="timeInput">
+      <h3>Enter Game Time</h3>
+      <input type="text" id="gameTime" placeholder="MM:SS">
+      <button onclick="recordGameTime()">Submit Time</button>
+      <button class="cancel-btn" onclick="resetUI()">Start Over</button>
+    </div>
+
+    <button style="margin-top: 20px;" onclick="printActionDatabase()">Print Action Database</button>
+    <button style="margin-top: 20px;" onclick="clearActionDatabase()">Clear Action Database</button>
   </div>
 
-  <!-- Time Input -->
-  <div id="timeInput">
-    <h3>Enter Game Time</h3>
-    <input type="text" id="gameTime" placeholder="MM:SS">
-    <button onclick="recordGameTime()">Submit Time</button>
-    <button class="cancel-btn" onclick="resetUI()">Start Over</button>
-  </div>
+  <!-- Game Setup Tab -->
+  <div id="game-setup" class="content">
+    <h2>Game Setup</h2>
+    <label for="game-id">Game ID:</label>
+    <input type="text" id="game-id" placeholder="Enter Game ID"><br>
+    <label for="game-date">Date:</label>
+    <input type="date" id="game-date"><br>
+    <label for="game-location">Location:</label>
+    <input type="text" id="game-location" placeholder="Enter Location"><br>
 
-  <!-- Print DB -->
-  <button style="margin-top: 20px;" onclick="printDatabase()">Print Full Database</button>
+    <div class="team-section">
+      <h3>Team 1</h3>
+      <input type="text" id="team1-name" placeholder="Enter Team 1 Name">
+      <div id="team1-players"></div>
+      <button onclick="addPlayerRow('team1')">Add Player</button>
+    </div>
+
+    <div class="team-section">
+      <h3>Team 2</h3>
+      <input type="text" id="team2-name" placeholder="Enter Team 2 Name">
+      <div id="team2-players"></div>
+      <button onclick="addPlayerRow('team2')">Add Player</button>
+    </div>
+
+    <button onclick="saveGame()">Save</button>
+    <button onclick="loadGame()">Load</button>
+    <button onclick="clearFields()">Clear</button>
+    <button style="margin-top: 20px;" onclick="printGameDatabase()">Print Game Database</button>
+    <button style="margin-top: 20px;" onclick="clearGameDatabase()">Clear Game Database</button>
+  </div>
 
   <script>
     let currentAction = null;
-    let detail1 = null; // To hold primary detail (points, offense/defense, etc.)
-    let detail2 = null; // To hold secondary detail (type of shot, turnover type, etc.)
+    let detail1 = null; // Primary detail (e.g., points, offense/defense, etc.)
+    let detail2 = null; // Secondary detail (e.g., type of shot, turnover type, etc.)
     let db;
 
-    // Open IndexedDB
+    // Initialize IndexedDB
     const request = indexedDB.open("BasketballTrackerDB", 5);
     request.onupgradeneeded = (event) => {
       db = event.target.result;
       if (!db.objectStoreNames.contains("actions")) {
         db.createObjectStore("actions", { autoIncrement: true });
       }
+      if (!db.objectStoreNames.contains("games")) {
+        db.createObjectStore("games", { keyPath: "game_id" });
+      }
     };
-    request.onsuccess = (event) => {
-      db = event.target.result;
-    };
+    request.onsuccess = (event) => { db = event.target.result; };
 
-    // Reset UI to show actions
+    // Tab Switching
+    function showTab(tabId) {
+      document.querySelectorAll('.content').forEach((el) => el.classList.remove('active'));
+      document.querySelector(`#${tabId}`).classList.add('active');
+      document.querySelectorAll('.tab button').forEach((el) => el.classList.remove('active'));
+      document.querySelector(`#tab-${tabId}`).classList.add('active');
+    }
+
+    // Stat Tracking Functions (Existing Implementation)
     function resetUI() {
       currentAction = null;
       detail1 = null;
@@ -91,7 +151,6 @@
       document.getElementById("timeInput").style.display = "none";
     }
 
-    // Handle action selection
     function selectAction(action) {
       currentAction = action;
       detail1 = null;
@@ -113,7 +172,6 @@
       }
     }
 
-    // Show detail options
     function showDetailOptions(prompt, options) {
       document.getElementById("details").style.display = "block";
       document.getElementById("detailPrompt").innerText = `Select ${prompt}`;
@@ -127,7 +185,6 @@
       });
     }
 
-    // Handle detail selection
     function handleDetailSelection(option) {
       if (!detail1) {
         detail1 = option;
@@ -155,7 +212,6 @@
       }
     }
 
-    // Record player action
     function recordAction(player) {
       const data = { action: currentAction, player: player, detail1: detail1, detail2: detail2, timestamp: new Date().toISOString() };
       console.log("Recorded:", data);
@@ -167,7 +223,6 @@
       resetUI(); // Reset UI to main actions
     }
 
-    // Record game time
     function recordGameTime() {
       const time = document.getElementById("gameTime").value;
       if (!time) {
@@ -184,8 +239,7 @@
       resetUI(); // Reset UI to main actions
     }
 
-    // Print full database
-    function printDatabase() {
+    function printActionDatabase() {
       const transaction = db.transaction("actions", "readonly");
       const store = transaction.objectStore("actions");
       const request = store.getAll();
@@ -195,8 +249,106 @@
       };
     }
 
-    // Initialize UI
-    resetUI();
+    function printGameDatabase() {
+      const transaction = db.transaction("games", "readonly");
+      const store = transaction.objectStore("games");
+      const request = store.getAll();
+    
+      request.onsuccess = (event) => {
+        console.log("Full Game Database:", event.target.result);
+      };
+    }
+    
+    function clearActionDatabase() {
+      const transaction = db.transaction("actions", "readwrite");
+      const store = transaction.objectStore("actions");
+      const request = store.clear();
+    
+      request.onsuccess = () => {
+        console.log("Action Database cleared.");
+      };
+    }
+    
+    function clearGameDatabase() {
+      const transaction = db.transaction("games", "readwrite");
+      const store = transaction.objectStore("games");
+      const request = store.clear();
+    
+      request.onsuccess = () => {
+        console.log("Game Database cleared.");
+      };
+    }
+
+
+    // Game Setup Functions
+    function addPlayerRow(team) {
+      const teamPlayers = document.querySelector(`#${team}-players`);
+      const playerRow = document.createElement('div');
+      playerRow.classList.add('player-row');
+      playerRow.innerHTML = `<input type="text" placeholder="Number"><input type="text" placeholder="Name">`;
+      teamPlayers.appendChild(playerRow);
+    }
+
+    function saveGame() {
+      const gameId = document.getElementById('game-id').value;
+      if (!gameId) { alert('Game ID is required to save.'); return; }
+      const gameData = {
+        game_id: gameId,
+        date: document.getElementById('game-date').value,
+        location: document.getElementById('game-location').value,
+        team1: { name: document.getElementById('team1-name').value, players: getPlayers('team1') },
+        team2: { name: document.getElementById('team2-name').value, players: getPlayers('team2') },
+      };
+      const transaction = db.transaction('games', 'readwrite');
+      transaction.objectStore('games').put(gameData);
+      alert('Game saved successfully!');
+    }
+
+    function loadGame() {
+      const gameId = document.getElementById('game-id').value;
+      if (!gameId) { alert('Enter Game ID to load.'); return; }
+      const transaction = db.transaction('games', 'readonly');
+      const request = transaction.objectStore('games').get(gameId);
+      request.onsuccess = (event) => {
+        const gameData = event.target.result;
+        if (!gameData) { alert('No game found.'); return; }
+        document.getElementById('game-date').value = gameData.date;
+        document.getElementById('game-location').value = gameData.location;
+        document.getElementById('team1-name').value = gameData.team1.name;
+        document.getElementById('team2-name').value = gameData.team2.name;
+        setPlayers('team1', gameData.team1.players);
+        setPlayers('team2', gameData.team2.players);
+      };
+    }
+
+    function clearFields() {
+      document.getElementById('game-id').value = '';
+      document.getElementById('game-date').value = '';
+      document.getElementById('game-location').value = '';
+      document.getElementById('team1-name').value = '';
+      document.getElementById('team2-name').value = '';
+      document.getElementById('team1-players').innerHTML = '';
+      document.getElementById('team2-players').innerHTML = '';
+    }
+
+    function getPlayers(team) {
+      const rows = document.querySelectorAll(`#${team}-players .player-row`);
+      return Array.from(rows).map(row => {
+        const inputs = row.querySelectorAll('input');
+        return { number: inputs[0].value, name: inputs[1].value };
+      }).filter(p => p.number || p.name);
+    }
+
+    function setPlayers(team, players) {
+      const container = document.getElementById(`${team}-players`);
+      container.innerHTML = '';
+      players.forEach(player => {
+        const playerRow = document.createElement('div');
+        playerRow.classList.add('player-row');
+        playerRow.innerHTML = `<input type="text" value="${player.number}" placeholder="Number"><input type="text" value="${player.name}" placeholder="Name">`;
+        container.appendChild(playerRow);
+      });
+    }
   </script>
 </body>
 </html>
