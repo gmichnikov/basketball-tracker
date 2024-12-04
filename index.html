@@ -58,16 +58,6 @@
 
     <!-- Player Selection -->
     <div id="players">
-      <h3>Select Player</h3>
-      <div class="button-grid">
-        <button onclick="recordAction(1)">Player 1</button>
-        <button onclick="recordAction(2)">Player 2</button>
-        <button onclick="recordAction(3)">Player 3</button>
-        <button onclick="recordAction(4)">Player 4</button>
-        <button onclick="recordAction(5)">Player 5</button>
-        <button onclick="recordAction('Team')">Team</button>
-      </div>
-      <button class="cancel-btn" onclick="resetUI()">Start Over</button>
     </div>
 
     <!-- Time Input -->
@@ -156,7 +146,7 @@
       detail1 = null;
       detail2 = null;
       document.getElementById("actions").style.display = "none";
-
+    
       if (action.startsWith("shot")) {
         showDetailOptions("Points", ["Free Throw", "2-Pointer", "3-Pointer"]);
       } else if (action === "rebound") {
@@ -168,9 +158,69 @@
       } else if (action === "record game time") {
         document.getElementById("timeInput").style.display = "block";
       } else {
-        document.getElementById("players").style.display = "block";
+        showPlayerButtons(); // Show player buttons based on loaded teams
       }
     }
+
+    function showPlayerButtons() {
+      const playersContainer = document.getElementById("players");
+      playersContainer.innerHTML = ""; // Clear existing buttons
+    
+      const transaction = db.transaction("games", "readonly");
+      const store = transaction.objectStore("games");
+      const gameId = document.getElementById("game-id").value;
+    
+      const request = store.get(gameId);
+      request.onsuccess = (event) => {
+        const gameData = event.target.result;
+        if (!gameData) {
+          alert("No game data found for the given Game ID.");
+          return;
+        }
+    
+        // Create buttons for Team 1 players
+        const team1Header = document.createElement("h4");
+        team1Header.textContent = gameData.team1.name || "Team 1";
+        playersContainer.appendChild(team1Header);
+    
+        // "Team" button for Team 1
+        const team1Button = document.createElement("button");
+        team1Button.textContent = "Team";
+        team1Button.onclick = () => recordAction(gameData.team1.name, null);
+        playersContainer.appendChild(team1Button);
+    
+        // Individual player buttons for Team 1
+        gameData.team1.players.forEach(player => {
+          const button = document.createElement("button");
+          button.textContent = `${player.number || ""} ${player.name || ""}`.trim();
+          button.onclick = () => recordAction(gameData.team1.name, player.number);
+          playersContainer.appendChild(button);
+        });
+    
+        // Create buttons for Team 2 players
+        const team2Header = document.createElement("h4");
+        team2Header.textContent = gameData.team2.name || "Team 2";
+        playersContainer.appendChild(team2Header);
+    
+        // "Team" button for Team 2
+        const team2Button = document.createElement("button");
+        team2Button.textContent = "Team";
+        team2Button.onclick = () => recordAction(gameData.team2.name, null);
+        playersContainer.appendChild(team2Button);
+    
+        // Individual player buttons for Team 2
+        gameData.team2.players.forEach(player => {
+          const button = document.createElement("button");
+          button.textContent = `${player.number || ""} ${player.name || ""}`.trim();
+          button.onclick = () => recordAction(gameData.team2.name, player.number);
+          playersContainer.appendChild(button);
+        });
+    
+        // Show player section
+        document.getElementById("players").style.display = "block";
+      };
+    }
+
 
     function showDetailOptions(prompt, options) {
       document.getElementById("details").style.display = "block";
@@ -203,23 +253,30 @@
           ]);
         } else {
           document.getElementById("details").style.display = "none";
-          document.getElementById("players").style.display = "block";
+          showPlayerButtons(); // Show player buttons after first-level detail
         }
       } else {
         detail2 = option;
         document.getElementById("details").style.display = "none";
-        document.getElementById("players").style.display = "block";
+        showPlayerButtons(); // Show player buttons after second-level detail
       }
     }
 
-    function recordAction(player) {
-      const data = { action: currentAction, player: player, detail1: detail1, detail2: detail2, timestamp: new Date().toISOString() };
+    function recordAction(teamName, jerseyNumber) {
+      const data = {
+        action: currentAction,
+        team: teamName,
+        playerNumber: jerseyNumber,
+        detail1: detail1,
+        detail2: detail2,
+        timestamp: new Date().toISOString()
+      };
       console.log("Recorded:", data);
-
+    
       const transaction = db.transaction("actions", "readwrite");
       const store = transaction.objectStore("actions");
       store.add(data);
-
+    
       resetUI(); // Reset UI to main actions
     }
 
