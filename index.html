@@ -70,6 +70,7 @@
 
     <button style="margin-top: 20px;" onclick="printActionDatabase()">Print Action Database</button>
     <button style="margin-top: 20px;" onclick="clearActionDatabase()">Clear Action Database</button>
+    <button style="margin-top: 20px;" onclick="exportToCSV()">Export to CSV</button>
   </div>
 
   <!-- Game Setup Tab -->
@@ -284,9 +285,10 @@
         showPlayerButtons(); // Show player buttons after second-level detail
       }
     }
-
     function recordAction(teamName, jerseyNumber) {
+      const gameId = document.getElementById("game-id").value;
       const data = {
+        game_id: gameId,
         action: currentAction,
         team: teamName,
         playerNumber: jerseyNumber,
@@ -305,7 +307,6 @@
       if (currentAction === "sub in" || currentAction === "sub out") {
         const gameTransaction = db.transaction("games", "readwrite");
         const gameStore = gameTransaction.objectStore("games");
-        const gameId = document.getElementById("game-id").value;
     
         const gameRequest = gameStore.get(gameId);
         gameRequest.onsuccess = (event) => {
@@ -313,7 +314,6 @@
           if (!gameData) return;
     
           const teamKey = gameData.team1.name === teamName ? "team1" : "team2";
-
           const players = gameData[teamKey].players.map(player => {
             if (player.number === jerseyNumber) {
               return { ...player, status: action === "sub in" ? "in" : "out" };
@@ -326,7 +326,7 @@
         };
       }
     
-      resetUI(); // Reset UI to main actions
+      resetUI();
     }
 
 
@@ -383,6 +383,53 @@
     
       request.onsuccess = () => {
         console.log("Game Database cleared.");
+      };
+    }
+
+
+    function exportToCSV() {
+      const gameId = document.getElementById("game-id").value;
+      if (!gameId) {
+        alert("Please enter a Game ID to export");
+        return;
+      }
+
+      const transaction = db.transaction("actions", "readonly");
+      const store = transaction.objectStore("actions");
+      const request = store.getAll();
+
+      request.onsuccess = (event) => {
+        const allActions = event.target.result;
+        const gameActions = allActions.filter(action => action.game_id === gameId);
+        
+        // Create CSV header
+        const headers = ["game_id", "action", "team", "playerNumber", "detail1", "detail2", "timestamp"];
+        let csvContent = headers.join(",") + "\n";
+        
+        // Add data rows
+        gameActions.forEach(action => {
+          const row = [
+            action.game_id,
+            action.action,
+            action.team,
+            action.playerNumber || "",
+            action.detail1 || "",
+            action.detail2 || "",
+            action.timestamp
+          ].map(value => `"${value}"`).join(",");
+          csvContent += row + "\n";
+        });
+
+        // Create and trigger download
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `game_${gameId}_actions.csv`);
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       };
     }
 
