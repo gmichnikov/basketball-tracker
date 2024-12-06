@@ -164,6 +164,8 @@
 
     <label for="game-id">Game ID:</label>
     <input type="text" id="game-id" placeholder="Enter Game ID"><br>
+    <label for="period">Period:</label>
+    <input type="number" id="period" min="1" value="1"><br>
     <label for="game-date">Date:</label>
     <input type="date" id="game-date"><br>
     <label for="game-location">Location:</label>
@@ -217,6 +219,7 @@
             new Date(b.timestamp) - new Date(a.timestamp)
           )[0];
           document.getElementById('game-id').value = mostRecent.game_id;
+          document.getElementById('period').value = mostRecent.period || 1;
         }
       };
     };
@@ -380,8 +383,10 @@
     }
     function recordAction(teamName, jerseyNumber) {
       const gameId = document.getElementById("game-id").value;
+      const period = document.getElementById("period").value;
       const data = {
         game_id: gameId,
+        period: period,
         action: currentAction,
         team: teamName,
         playerNumber: jerseyNumber,
