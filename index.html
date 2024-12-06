@@ -70,7 +70,8 @@
 
     <button style="margin-top: 20px;" onclick="printActionDatabase()">Print Action Database</button>
     <button style="margin-top: 20px;" onclick="clearActionDatabase()">Clear Action Database</button>
-    <button style="margin-top: 20px;" onclick="exportToCSV()">Export to CSV</button>
+    <button style="margin-top: 20px;" onclick="exportToCSV()">Export Actions to CSV</button>
+    <button style="margin-top: 20px;" onclick="exportBoxScore()">Export Box Score to CSV</button>
   </div>
 
   <!-- Game Setup Tab -->
@@ -433,6 +434,122 @@
       };
     }
 
+    function exportBoxScore() {
+      const gameId = document.getElementById("game-id").value;
+      if (!gameId) {
+        alert("Please enter a Game ID to export");
+        return;
+      }
+
+      const transaction = db.transaction(["actions", "games"], "readonly");
+      const actionStore = transaction.objectStore("actions");
+      const gameStore = transaction.objectStore("games");
+
+      const actionRequest = actionStore.getAll();
+      const gameRequest = gameStore.get(gameId);
+
+      Promise.all([
+        new Promise(resolve => {
+          actionRequest.onsuccess = () => resolve(actionRequest.result);
+        }),
+        new Promise(resolve => {
+          gameRequest.onsuccess = () => resolve(gameRequest.result);
+        })
+      ]).then(([actions, gameData]) => {
+        const gameActions = actions.filter(action => action.game_id === gameId);
+        
+        // Initialize player stats
+        const playerStats = {};
+        [gameData.team1, gameData.team2].forEach(team => {
+          team.players.forEach(player => {
+            playerStats[`${team.name}-${player.number}`] = {
+              team: team.name,
+              number: player.number,
+              name: player.name,
+              ftMade: 0,
+              ftMissed: 0,
+              twoPtMade: 0,
+              twoPtMissed: 0,
+              threePtMade: 0,
+              threePtMissed: 0,
+              totalPoints: 0
+            };
+          });
+        });
+
+        // Calculate stats
+        gameActions.forEach(action => {
+          if (!action.action.startsWith('shot')) return;
+          
+          const key = `${action.team}-${action.playerNumber}`;
+          if (!playerStats[key]) return;
+
+          const stats = playerStats[key];
+          const isMake = action.action === 'shot make';
+
+          if (action.detail1 === 'Free Throw') {
+            if (isMake) {
+              stats.ftMade++;
+              stats.totalPoints++;
+            } else {
+              stats.ftMissed++;
+            }
+          } else if (action.detail1 === '2-Pointer') {
+            if (isMake) {
+              stats.twoPtMade++;
+              stats.totalPoints += 2;
+            } else {
+              stats.twoPtMissed++;
+            }
+          } else if (action.detail1 === '3-Pointer') {
+            if (isMake) {
+              stats.threePtMade++;
+              stats.totalPoints += 3;
+            } else {
+              stats.threePtMissed++;
+            }
+          }
+        });
+
+        // Create CSV content
+        const headers = [
+          "Team", "Number", "Name", 
+          "FT Made", "FT Missed",
+          "2PT Made", "2PT Missed",
+          "3PT Made", "3PT Missed",
+          "Total Points"
+        ];
+        
+        let csvContent = headers.join(",") + "\n";
+
+        Object.values(playerStats).forEach(stats => {
+          const row = [
+            stats.team,
+            stats.number,
+            stats.name,
+            stats.ftMade,
+            stats.ftMissed,
+            stats.twoPtMade,
+            stats.twoPtMissed,
+            stats.threePtMade,
+            stats.threePtMissed,
+            stats.totalPoints
+          ].map(value => `"${value}"`).join(",");
+          csvContent += row + "\n";
+        });
+
+        // Download CSV
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `game_${gameId}_boxscore.csv`);
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+    }
 
     // Game Setup Functions
     function addPlayerRow(team) {
