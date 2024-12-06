@@ -201,7 +201,25 @@
         db.createObjectStore("games", { keyPath: "game_id" });
       }
     };
-    request.onsuccess = (event) => { db = event.target.result; };
+
+    request.onsuccess = (event) => { 
+      db = event.target.result;
+      
+      // Get most recent game ID
+      const transaction = db.transaction("actions", "readonly");
+      const store = transaction.objectStore("actions");
+      const request = store.getAll();
+
+      request.onsuccess = (event) => {
+        const actions = event.target.result;
+        if (actions && actions.length > 0) {
+          const mostRecent = actions.sort((a, b) => 
+            new Date(b.timestamp) - new Date(a.timestamp)
+          )[0];
+          document.getElementById('game-id').value = mostRecent.game_id;
+        }
+      };
+    };
 
     // Tab Switching
     function showTab(tabId) {
