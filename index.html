@@ -19,7 +19,7 @@
     .team-section { margin: 20px 0; }
     .team-section h3 { margin-bottom: 10px; }
     .player-row { display: flex; gap: 10px; margin-bottom: 5px; }
-    .player-row input { width: 45%; padding: 5px; }
+    .player-row input { width: 80px; padding: 5px; }
   </style>
 </head>
 <body>
@@ -69,7 +69,7 @@
     </div>
 
     <button style="margin-top: 20px;" onclick="printActionDatabase()">Print Action Database</button>
-    <button style="margin-top: 20px;" onclick="clearActionDatabase()">Clear Action Database</button>
+    <!-- <button style="margin-top: 20px;" onclick="clearActionDatabase()">Clear Action Database</button> -->
     <button style="margin-top: 20px;" onclick="exportToCSV()">Export Actions</button>
     <button style="margin-top: 20px;" onclick="exportBoxScore()">Export Box Score</button>
     <button style="margin-top: 20px;" onclick="showBox()">Show Box</button>
@@ -86,7 +86,7 @@
     <button onclick="loadGame()">Load</button>
     <button onclick="clearFields()">Clear</button>
     <button style="margin-top: 20px;" onclick="printGameDatabase()">Print Game Database</button>
-    <button style="margin-top: 20px;" onclick="clearGameDatabase()">Clear Game Database</button>
+    <!-- <button style="margin-top: 20px;" onclick="clearGameDatabase()">Clear Game Database</button> -->
     <br>
 
     <label for="game-id">Game ID:</label>
@@ -461,9 +461,9 @@
         
         const headers = [
           "Team", "Number", "Name", 
-          "FT Made", "FT Missed",
-          "2PT Made", "2PT Missed",
-          "3PT Made", "3PT Missed",
+          "FT Made", "FT Attempted",
+          "2PT Made", "2PT Attempted",
+          "3PT Made", "3PT Attempted",
           "Total Points",
           "Off Rebounds", "Def Rebounds", "Total Rebounds",
           "Fouls", "Steals", "Blocks", "Turnovers"
@@ -477,11 +477,11 @@
             stats.number,
             stats.name,
             stats.ftMade,
-            stats.ftMissed,
+            stats.ftMade + stats.ftMissed,
             stats.twoPtMade,
-            stats.twoPtMissed,
-            stats.threePtMade,
-            stats.threePtMissed,
+            stats.twoPtMade + stats.twoPtMissed,
+            stats.threePtMade, 
+            stats.threePtMade + stats.threePtMissed,
             stats.totalPoints,
             stats.offRebounds,
             stats.defRebounds,
@@ -609,61 +609,69 @@
         const gameActions = actions.filter(action => action.game_id === gameId);
         const playerStats = calculateBoxScore(gameActions, gameData);
         
-        // Create HTML table
-        let tableHTML = `
-          <table style="border-collapse: collapse; width: 100%;">
-            <thead>
-              <tr>
-                <th style="border: 1px solid black; padding: 8px;">Team</th>
-                <th style="border: 1px solid black; padding: 8px;">#</th>
-                <th style="border: 1px solid black; padding: 8px;">Name</th>
-                <th style="border: 1px solid black; padding: 8px;">FTM</th>
-                <th style="border: 1px solid black; padding: 8px;">FTA</th>
-                <th style="border: 1px solid black; padding: 8px;">2PM</th>
-                <th style="border: 1px solid black; padding: 8px;">2PA</th>
-                <th style="border: 1px solid black; padding: 8px;">3PM</th>
-                <th style="border: 1px solid black; padding: 8px;">3PA</th>
-                <th style="border: 1px solid black; padding: 8px;">PTS</th>
-                <th style="border: 1px solid black; padding: 8px;">OREB</th>
-                <th style="border: 1px solid black; padding: 8px;">DREB</th>
-                <th style="border: 1px solid black; padding: 8px;">REB</th>
-                <th style="border: 1px solid black; padding: 8px;">F</th>
-                <th style="border: 1px solid black; padding: 8px;">STL</th>
-                <th style="border: 1px solid black; padding: 8px;">BLK</th>
-                <th style="border: 1px solid black; padding: 8px;">TO</th>
-              </tr>
-            </thead>
-            <tbody>
-        `;
+        // Group players by team
+        const team1Stats = Object.values(playerStats).filter(stats => stats.team === gameData.team1.name);
+        const team2Stats = Object.values(playerStats).filter(stats => stats.team === gameData.team2.name);
 
-        Object.values(playerStats).forEach(stats => {
-          tableHTML += `
-            <tr>
-              <td style="border: 1px solid black; padding: 8px;">${stats.team}</td>
-              <td style="border: 1px solid black; padding: 8px;">${stats.number}</td>
-              <td style="border: 1px solid black; padding: 8px;">${stats.name}</td>
-              <td style="border: 1px solid black; padding: 8px;">${stats.ftMade}</td>
-              <td style="border: 1px solid black; padding: 8px;">${stats.ftMade + stats.ftMissed}</td>
-              <td style="border: 1px solid black; padding: 8px;">${stats.twoPtMade}</td>
-              <td style="border: 1px solid black; padding: 8px;">${stats.twoPtMade + stats.twoPtMissed}</td>
-              <td style="border: 1px solid black; padding: 8px;">${stats.threePtMade}</td>
-              <td style="border: 1px solid black; padding: 8px;">${stats.threePtMade + stats.threePtMissed}</td>
-              <td style="border: 1px solid black; padding: 8px;">${stats.totalPoints}</td>
-              <td style="border: 1px solid black; padding: 8px;">${stats.offRebounds}</td>
-              <td style="border: 1px solid black; padding: 8px;">${stats.defRebounds}</td>
-              <td style="border: 1px solid black; padding: 8px;">${stats.totalRebounds}</td>
-              <td style="border: 1px solid black; padding: 8px;">${stats.fouls}</td>
-              <td style="border: 1px solid black; padding: 8px;">${stats.steals}</td>
-              <td style="border: 1px solid black; padding: 8px;">${stats.blocks}</td>
-              <td style="border: 1px solid black; padding: 8px;">${stats.turnovers}</td>
-            </tr>
+        // Function to create table HTML
+        function createTableHTML(teamName, teamStats) {
+          let tableHTML = `
+            <h3>${teamName}</h3>
+            <table style="border-collapse: collapse; width: 100%; margin-bottom: 20px;">
+              <thead>
+                <tr>
+                  <th style="border: 1px solid black; padding: 8px;">#</th>
+                  <th style="border: 1px solid black; padding: 8px;">Name</th>
+                  <th style="border: 1px solid black; padding: 8px;">FTM</th>
+                  <th style="border: 1px solid black; padding: 8px;">FTA</th>
+                  <th style="border: 1px solid black; padding: 8px;">2PM</th>
+                  <th style="border: 1px solid black; padding: 8px;">2PA</th>
+                  <th style="border: 1px solid black; padding: 8px;">3PM</th>
+                  <th style="border: 1px solid black; padding: 8px;">3PA</th>
+                  <th style="border: 1px solid black; padding: 8px;">PTS</th>
+                  <th style="border: 1px solid black; padding: 8px;">OREB</th>
+                  <th style="border: 1px solid black; padding: 8px;">DREB</th>
+                  <th style="border: 1px solid black; padding: 8px;">REB</th>
+                  <th style="border: 1px solid black; padding: 8px;">F</th>
+                  <th style="border: 1px solid black; padding: 8px;">STL</th>
+                  <th style="border: 1px solid black; padding: 8px;">BLK</th>
+                  <th style="border: 1px solid black; padding: 8px;">TO</th>
+                </tr>
+              </thead>
+              <tbody>
           `;
-        });
 
-        tableHTML += '</tbody></table>';
-        
+          teamStats.forEach(stats => {
+            tableHTML += `
+              <tr>
+                <td style="border: 1px solid black; padding: 8px;">${stats.number}</td>
+                <td style="border: 1px solid black; padding: 8px;">${stats.name}</td>
+                <td style="border: 1px solid black; padding: 8px;">${stats.ftMade}</td>
+                <td style="border: 1px solid black; padding: 8px;">${stats.ftMade + stats.ftMissed}</td>
+                <td style="border: 1px solid black; padding: 8px;">${stats.twoPtMade}</td>
+                <td style="border: 1px solid black; padding: 8px;">${stats.twoPtMade + stats.twoPtMissed}</td>
+                <td style="border: 1px solid black; padding: 8px;">${stats.threePtMade}</td>
+                <td style="border: 1px solid black; padding: 8px;">${stats.threePtMade + stats.threePtMissed}</td>
+                <td style="border: 1px solid black; padding: 8px;">${stats.totalPoints}</td>
+                <td style="border: 1px solid black; padding: 8px;">${stats.offRebounds}</td>
+                <td style="border: 1px solid black; padding: 8px;">${stats.defRebounds}</td>
+                <td style="border: 1px solid black; padding: 8px;">${stats.totalRebounds}</td>
+                <td style="border: 1px solid black; padding: 8px;">${stats.fouls}</td>
+                <td style="border: 1px solid black; padding: 8px;">${stats.steals}</td>
+                <td style="border: 1px solid black; padding: 8px;">${stats.blocks}</td>
+                <td style="border: 1px solid black; padding: 8px;">${stats.turnovers}</td>
+              </tr>
+            `;
+          });
+
+          tableHTML += '</tbody></table>';
+          return tableHTML;
+        }
+
         const boxScoreDiv = document.getElementById('boxScoreTable');
-        boxScoreDiv.innerHTML = tableHTML;
+        boxScoreDiv.innerHTML = 
+          createTableHTML(gameData.team1.name, team1Stats) + 
+          createTableHTML(gameData.team2.name, team2Stats);
         boxScoreDiv.style.display = 'block';
       });
     }
