@@ -690,8 +690,10 @@
 
         // Function to create table HTML
         function createTableHTML(teamName, teamStats) {
+          const teamScore = teamStats.reduce((sum, player) => sum + player.totalPoints, 0);
+
           let tableHTML = `
-            <h3>${teamName}</h3>
+            <h3>${teamName} - ${teamScore}</h3>
             <table style="border-collapse: collapse; width: 100%; margin-bottom: 20px;">
               <thead>
                 <tr>
