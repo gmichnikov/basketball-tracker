@@ -1,27 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Basketball Tracker</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    .tab { display: flex; gap: 10px; cursor: pointer; margin-bottom: 20px; }
-    .tab button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
-    .tab button.active { background-color: #007bff; color: white; }
-    .content { display: none; }
-    .content.active { display: block; }
-    .button-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-    .button-grid button { padding: 10px 20px; font-size: 16px; }
-    #details, #players, #timeInput { display: none; margin-top: 20px; }
-    .cancel-btn { margin-top: 20px; background-color: #f44336; color: white; border: none; padding: 10px 20px; cursor: pointer; font-size: 16px; display: block;}
-    .cancel-btn:hover { background-color: #d32f2f; }
-    .team-section { margin: 20px 0; }
-    .team-section h3 { margin-bottom: 10px; }
-    .player-row { display: flex; gap: 10px; margin-bottom: 5px; }
-    .player-row input { width: 80px; padding: 5px; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    .tab {
+      display: flex;
+      gap: 10px;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+
+    .tab button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .tab button.active {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .content {
+      display: none;
+    }
+
+    .content.active {
+      display: block;
+    }
+
+    .button-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .button-grid button {
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+
+    #details,
+    #players,
+    #timeInput {
+      display: none;
+      margin-top: 20px;
+    }
+
+    .cancel-btn {
+      margin-top: 20px;
+      background-color: #f44336;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 16px;
+      display: block;
+    }
+
+    .cancel-btn:hover {
+      background-color: #d32f2f;
+    }
+
+    .team-section {
+      margin: 20px 0;
+    }
+
+    .team-section h3 {
+      margin-bottom: 10px;
+    }
+
+    .player-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 5px;
+    }
+
+    .player-row input {
+      width: 80px;
+      padding: 5px;
+    }
   </style>
 </head>
+
 <body>
   <h1>Basketball Tracker</h1>
 
@@ -77,7 +147,7 @@
     <div id="boxScoreTable" style="display: none; margin-top: 20px; overflow-x: auto;"></div>
     <button style="margin-top: 20px;" onclick="showRecent()">Show Recent</button>
     <button style="margin-top: 20px;" onclick="hideRecent()">Hide Recent</button>
-    <div id="recentActions" style="display: none; margin-top: 20px;"></div>    
+    <div id="recentActions" style="display: none; margin-top: 20px;"></div>
   </div>
 
   <!-- Game Setup Tab -->
@@ -157,7 +227,7 @@
       detail1 = null;
       detail2 = null;
       document.getElementById("actions").style.display = "none";
-    
+
       if (action.startsWith("shot")) {
         showDetailOptions("Points", ["Free Throw", "2-Pointer", "3-Pointer"]);
       } else if (action === "rebound") {
@@ -209,8 +279,8 @@
 
         // Team 1 player buttons
         gameData.team1.players.forEach(player => {
-          if ((currentAction === "sub in" && player.status !== "in") || 
-              (currentAction !== "sub in" && player.status === "in")) {
+          if ((currentAction === "sub in" && player.status !== "in") ||
+            (currentAction !== "sub in" && player.status === "in")) {
             const button = document.createElement("button");
             button.textContent = `${player.number || ""} ${player.name || ""}`.trim();
             button.onclick = () => recordAction(gameData.team1.name, player.number);
@@ -231,8 +301,8 @@
 
         // Team 2 player buttons
         gameData.team2.players.forEach(player => {
-          if ((currentAction === "sub in" && player.status !== "in") || 
-              (currentAction !== "sub in" && player.status === "in")) {
+          if ((currentAction === "sub in" && player.status !== "in") ||
+            (currentAction !== "sub in" && player.status === "in")) {
             const button = document.createElement("button");
             button.textContent = `${player.number || ""} ${player.name || ""}`.trim();
             button.onclick = () => recordAction(gameData.team2.name, player.number);
@@ -250,8 +320,6 @@
         playersContainer.style.display = "block";
       };
     }
-
-
 
     function showDetailOptions(prompt, options) {
       document.getElementById("details").style.display = "block";
@@ -304,7 +372,7 @@
         timestamp: new Date().toISOString()
       };
       console.log("Recorded:", data);
-    
+
       const transaction = db.transaction("actions", "readwrite");
       const store = transaction.objectStore("actions");
       const request = store.add(data);
@@ -314,18 +382,18 @@
         data.id = id;  // Store it with the data
         console.log("Recorded action with ID:", id);
       };
-      
+
       // Update player status for substitutions
       const action = currentAction;
       if (currentAction === "sub in" || currentAction === "sub out") {
         const gameTransaction = db.transaction("games", "readwrite");
         const gameStore = gameTransaction.objectStore("games");
-    
+
         const gameRequest = gameStore.get(gameId);
         gameRequest.onsuccess = (event) => {
           const gameData = event.target.result;
           if (!gameData) return;
-    
+
           const teamKey = gameData.team1.name === teamName ? "team1" : "team2";
           const players = gameData[teamKey].players.map(player => {
             if (player.number === jerseyNumber) {
@@ -333,15 +401,14 @@
             }
             return player;
           });
-    
+
           gameData[teamKey].players = players;
           gameStore.put(gameData);
         };
       }
-    
+
       resetUI();
     }
-
 
     function recordGameTime() {
       const time = document.getElementById("gameTime").value;
@@ -373,27 +440,27 @@
       const transaction = db.transaction("games", "readonly");
       const store = transaction.objectStore("games");
       const request = store.getAll();
-    
+
       request.onsuccess = (event) => {
         console.log("Full Game Database:", event.target.result);
       };
     }
-    
+
     function clearActionDatabase() {
       const transaction = db.transaction("actions", "readwrite");
       const store = transaction.objectStore("actions");
       const request = store.clear();
-    
+
       request.onsuccess = () => {
         console.log("Action Database cleared.");
       };
     }
-    
+
     function clearGameDatabase() {
       const transaction = db.transaction("games", "readwrite");
       const store = transaction.objectStore("games");
       const request = store.clear();
-    
+
       request.onsuccess = () => {
         console.log("Game Database cleared.");
       };
@@ -414,11 +481,11 @@
       request.onsuccess = (event) => {
         const allActions = event.target.result;
         const gameActions = allActions.filter(action => action.game_id === gameId);
-        
+
         // Create CSV header
         const headers = ["game_id", "action", "team", "playerNumber", "detail1", "detail2", "timestamp"];
         let csvContent = headers.join(",") + "\n";
-        
+
         // Add data rows
         gameActions.forEach(action => {
           const row = [
@@ -467,9 +534,9 @@
       ]).then(([actions, gameData]) => {
         const gameActions = actions.filter(action => action.game_id === gameId);
         const playerStats = calculateBoxScore(gameActions, gameData);
-        
+
         const headers = [
-          "Team", "Number", "Name", 
+          "Team", "Number", "Name",
           "FT Made", "FT Attempted",
           "2PT Made", "2PT Attempted",
           "3PT Made", "3PT Attempted",
@@ -477,7 +544,7 @@
           "Off Rebounds", "Def Rebounds", "Total Rebounds",
           "Fouls", "Steals", "Blocks", "Turnovers"
         ];
-        
+
         let csvContent = headers.join(",") + "\n";
 
         Object.values(playerStats).forEach(stats => {
@@ -489,7 +556,7 @@
             stats.ftMade + stats.ftMissed,
             stats.twoPtMade,
             stats.twoPtMade + stats.twoPtMissed,
-            stats.threePtMade, 
+            stats.threePtMade,
             stats.threePtMade + stats.threePtMissed,
             stats.totalPoints,
             stats.offRebounds,
@@ -514,7 +581,6 @@
         document.body.removeChild(link);
       });
     }
-
 
     function calculateBoxScore(gameActions, gameData) {
       const playerStats = {};
@@ -547,8 +613,8 @@
         if (!playerStats[key]) return;
 
         const stats = playerStats[key];
-        
-        switch(action.action) {
+
+        switch (action.action) {
           case 'shot make':
             if (action.detail1 === 'Free Throw') {
               stats.ftMade++;
@@ -617,7 +683,7 @@
       ]).then(([actions, gameData]) => {
         const gameActions = actions.filter(action => action.game_id === gameId);
         const playerStats = calculateBoxScore(gameActions, gameData);
-        
+
         // Group players by team
         const team1Stats = Object.values(playerStats).filter(stats => stats.team === gameData.team1.name);
         const team2Stats = Object.values(playerStats).filter(stats => stats.team === gameData.team2.name);
@@ -678,8 +744,8 @@
         }
 
         const boxScoreDiv = document.getElementById('boxScoreTable');
-        boxScoreDiv.innerHTML = 
-          createTableHTML(gameData.team1.name, team1Stats) + 
+        boxScoreDiv.innerHTML =
+          createTableHTML(gameData.team1.name, team1Stats) +
           createTableHTML(gameData.team2.name, team2Stats);
         boxScoreDiv.style.display = 'block';
       });
@@ -741,7 +807,7 @@
           const time = new Date(action.timestamp).toLocaleTimeString();
           const details = [action.detail1, action.detail2].filter(Boolean).join(" - ");
           const playerName = getPlayerName(action.team, action.playerNumber);
-          
+
           tableHTML += `
             <tr>
               <td style="border: 1px solid black; padding: 8px;">${time}</td>
@@ -758,13 +824,12 @@
         });
 
         tableHTML += '</tbody></table>';
-        
+
         const recentDiv = document.getElementById('recentActions');
         recentDiv.innerHTML = tableHTML;
         recentDiv.style.display = 'block';
       });
     }
-
 
     function hideRecent() {
       document.getElementById('recentActions').style.display = 'none';
@@ -772,10 +837,10 @@
 
     function removeAction(timestamp, gameId) {
       console.log("Removing action with timestamp:", timestamp, "and game ID:", gameId);
-      
+
       const transaction = db.transaction("actions", "readwrite");
       const store = transaction.objectStore("actions");
-      
+
       store.getAll().onsuccess = (event) => {
         const actions = event.target.result;
         actions.forEach((action, index) => {
@@ -786,7 +851,7 @@
         });
       };
     }
- 
+
     // Game Setup Functions
     function addPlayerRow(team) {
       const teamPlayers = document.querySelector(`#${team}-players`);
@@ -843,7 +908,6 @@
       };
     }
 
-
     function clearFields() {
       document.getElementById('game-id').value = '';
       document.getElementById('game-date').value = '';
@@ -874,4 +938,5 @@
     }
   </script>
 </body>
+
 </html>
