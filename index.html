@@ -433,7 +433,6 @@
         document.body.removeChild(link);
       };
     }
-
     function exportBoxScore() {
       const gameId = document.getElementById("game-id").value;
       if (!gameId) {
@@ -458,7 +457,7 @@
       ]).then(([actions, gameData]) => {
         const gameActions = actions.filter(action => action.game_id === gameId);
         
-        // Initialize player stats
+        // Initialize player stats with new categories
         const playerStats = {};
         [gameData.team1, gameData.team2].forEach(team => {
           team.players.forEach(player => {
@@ -472,6 +471,13 @@
               twoPtMissed: 0,
               threePtMade: 0,
               threePtMissed: 0,
+              offRebounds: 0,
+              defRebounds: 0,
+              totalRebounds: 0,
+              fouls: 0,
+              steals: 0,
+              blocks: 0,
+              turnovers: 0,
               totalPoints: 0
             };
           });
@@ -479,44 +485,64 @@
 
         // Calculate stats
         gameActions.forEach(action => {
-          if (!action.action.startsWith('shot')) return;
-          
           const key = `${action.team}-${action.playerNumber}`;
           if (!playerStats[key]) return;
 
           const stats = playerStats[key];
-          const isMake = action.action === 'shot make';
-
-          if (action.detail1 === 'Free Throw') {
-            if (isMake) {
-              stats.ftMade++;
-              stats.totalPoints++;
-            } else {
-              stats.ftMissed++;
-            }
-          } else if (action.detail1 === '2-Pointer') {
-            if (isMake) {
-              stats.twoPtMade++;
-              stats.totalPoints += 2;
-            } else {
-              stats.twoPtMissed++;
-            }
-          } else if (action.detail1 === '3-Pointer') {
-            if (isMake) {
-              stats.threePtMade++;
-              stats.totalPoints += 3;
-            } else {
-              stats.threePtMissed++;
-            }
+          
+          switch(action.action) {
+            case 'shot make':
+              if (action.detail1 === 'Free Throw') {
+                stats.ftMade++;
+                stats.totalPoints++;
+              } else if (action.detail1 === '2-Pointer') {
+                stats.twoPtMade++;
+                stats.totalPoints += 2;
+              } else if (action.detail1 === '3-Pointer') {
+                stats.threePtMade++;
+                stats.totalPoints += 3;
+              }
+              break;
+            case 'shot miss':
+              if (action.detail1 === 'Free Throw') {
+                stats.ftMissed++;
+              } else if (action.detail1 === '2-Pointer') {
+                stats.twoPtMissed++;
+              } else if (action.detail1 === '3-Pointer') {
+                stats.threePtMissed++;
+              }
+              break;
+            case 'rebound':
+              if (action.detail1 === 'Offensive') {
+                stats.offRebounds++;
+              } else if (action.detail1 === 'Defensive') {
+                stats.defRebounds++;
+              }
+              stats.totalRebounds = stats.offRebounds + stats.defRebounds;
+              break;
+            case 'foul':
+              stats.fouls++;
+              break;
+            case 'steal':
+              stats.steals++;
+              break;
+            case 'block':
+              stats.blocks++;
+              break;
+            case 'turnover':
+              stats.turnovers++;
+              break;
           }
         });
 
-        // Create CSV content
+        // Create CSV content with new columns
         const headers = [
           "Team", "Number", "Name", 
           "FT Made", "FT Missed",
           "2PT Made", "2PT Missed",
           "3PT Made", "3PT Missed",
+          "Off Rebounds", "Def Rebounds", "Total Rebounds",
+          "Fouls", "Steals", "Blocks", "Turnovers",
           "Total Points"
         ];
         
@@ -533,6 +559,13 @@
             stats.twoPtMissed,
             stats.threePtMade,
             stats.threePtMissed,
+            stats.offRebounds,
+            stats.defRebounds,
+            stats.totalRebounds,
+            stats.fouls,
+            stats.steals,
+            stats.blocks,
+            stats.turnovers,
             stats.totalPoints
           ].map(value => `"${value}"`).join(",");
           csvContent += row + "\n";
