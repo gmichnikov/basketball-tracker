@@ -75,6 +75,9 @@
     <button style="margin-top: 20px;" onclick="showBox()">Show Box</button>
     <button style="margin-top: 20px;" onclick="hideBox()">Hide Box</button>
     <div id="boxScoreTable" style="display: none; margin-top: 20px; overflow-x: auto;"></div>
+    <button style="margin-top: 20px;" onclick="showRecent()">Show Recent</button>
+    <button style="margin-top: 20px;" onclick="hideRecent()">Hide Recent</button>
+    <div id="recentActions" style="display: none; margin-top: 20px;"></div>    
   </div>
 
   <!-- Game Setup Tab -->
@@ -304,8 +307,14 @@
     
       const transaction = db.transaction("actions", "readwrite");
       const store = transaction.objectStore("actions");
-      store.add(data);
-    
+      const request = store.add(data);
+
+      request.onsuccess = (event) => {
+        const id = event.target.result;  // Capture the auto-generated key
+        data.id = id;  // Store it with the data
+        console.log("Recorded action with ID:", id);
+      };
+      
       // Update player status for substitutions
       const action = currentAction;
       if (currentAction === "sub in" || currentAction === "sub out") {
@@ -680,7 +689,104 @@
       document.getElementById('boxScoreTable').style.display = 'none';
     }
 
+    function showRecent() {
+      const gameId = document.getElementById("game-id").value;
+      if (!gameId) {
+        alert("Please enter a Game ID to show recent actions");
+        return;
+      }
 
+      const transaction = db.transaction(["actions", "games"], "readonly");
+      const actionStore = transaction.objectStore("actions");
+      const gameStore = transaction.objectStore("games");
+
+      Promise.all([
+        new Promise(resolve => {
+          actionStore.getAll().onsuccess = (event) => resolve(event.target.result);
+        }),
+        new Promise(resolve => {
+          gameStore.get(gameId).onsuccess = (event) => resolve(event.target.result);
+        })
+      ]).then(([allActions, gameData]) => {
+        const gameActions = allActions
+          .filter(action => action.game_id === gameId)
+          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+          .slice(0, 5);
+
+        // Function to find player name
+        const getPlayerName = (team, number) => {
+          if (!number) return '';
+          const teamData = gameData.team1.name === team ? gameData.team1 : gameData.team2;
+          const player = teamData.players.find(p => p.number === number);
+          return player ? player.name : '';
+        };
+
+        let tableHTML = `
+          <table style="border-collapse: collapse; width: 100%;">
+            <thead>
+              <tr>
+                <th style="border: 1px solid black; padding: 8px;">Time</th>
+                <th style="border: 1px solid black; padding: 8px;">Team</th>
+                <th style="border: 1px solid black; padding: 8px;">#</th>
+                <th style="border: 1px solid black; padding: 8px;">Name</th>
+                <th style="border: 1px solid black; padding: 8px;">Action</th>
+                <th style="border: 1px solid black; padding: 8px;">Details</th>
+                <th style="border: 1px solid black; padding: 8px;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        gameActions.forEach(action => {
+          const time = new Date(action.timestamp).toLocaleTimeString();
+          const details = [action.detail1, action.detail2].filter(Boolean).join(" - ");
+          const playerName = getPlayerName(action.team, action.playerNumber);
+          
+          tableHTML += `
+            <tr>
+              <td style="border: 1px solid black; padding: 8px;">${time}</td>
+              <td style="border: 1px solid black; padding: 8px;">${action.team || ''}</td>
+              <td style="border: 1px solid black; padding: 8px;">${action.playerNumber || ''}</td>
+              <td style="border: 1px solid black; padding: 8px;">${playerName}</td>
+              <td style="border: 1px solid black; padding: 8px;">${action.action}</td>
+              <td style="border: 1px solid black; padding: 8px;">${details}</td>
+              <td style="border: 1px solid black; padding: 8px;">
+                <button onclick="removeAction('${action.timestamp}', '${action.game_id}')">Remove</button>
+              </td>
+            </tr>
+          `;
+        });
+
+        tableHTML += '</tbody></table>';
+        
+        const recentDiv = document.getElementById('recentActions');
+        recentDiv.innerHTML = tableHTML;
+        recentDiv.style.display = 'block';
+      });
+    }
+
+
+    function hideRecent() {
+      document.getElementById('recentActions').style.display = 'none';
+    }
+
+    function removeAction(timestamp, gameId) {
+      console.log("Removing action with timestamp:", timestamp, "and game ID:", gameId);
+      
+      const transaction = db.transaction("actions", "readwrite");
+      const store = transaction.objectStore("actions");
+      
+      store.getAll().onsuccess = (event) => {
+        const actions = event.target.result;
+        actions.forEach((action, index) => {
+          if (action.timestamp === timestamp && action.game_id === gameId) {
+            store.delete(index + 1);
+            hideRecent();
+          }
+        });
+      };
+    }
+ 
     // Game Setup Functions
     function addPlayerRow(team) {
       const teamPlayers = document.querySelector(`#${team}-players`);
