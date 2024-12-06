@@ -70,8 +70,11 @@
 
     <button style="margin-top: 20px;" onclick="printActionDatabase()">Print Action Database</button>
     <button style="margin-top: 20px;" onclick="clearActionDatabase()">Clear Action Database</button>
-    <button style="margin-top: 20px;" onclick="exportToCSV()">Export Actions to CSV</button>
-    <button style="margin-top: 20px;" onclick="exportBoxScore()">Export Box Score to CSV</button>
+    <button style="margin-top: 20px;" onclick="exportToCSV()">Export Actions</button>
+    <button style="margin-top: 20px;" onclick="exportBoxScore()">Export Box Score</button>
+    <button style="margin-top: 20px;" onclick="showBox()">Show Box</button>
+    <button style="margin-top: 20px;" onclick="hideBox()">Hide Box</button>
+    <div id="boxScoreTable" style="display: none; margin-top: 20px; overflow-x: auto;"></div>
   </div>
 
   <!-- Game Setup Tab -->
@@ -433,6 +436,7 @@
         document.body.removeChild(link);
       };
     }
+
     function exportBoxScore() {
       const gameId = document.getElementById("game-id").value;
       if (!gameId) {
@@ -444,106 +448,25 @@
       const actionStore = transaction.objectStore("actions");
       const gameStore = transaction.objectStore("games");
 
-      const actionRequest = actionStore.getAll();
-      const gameRequest = gameStore.get(gameId);
-
       Promise.all([
         new Promise(resolve => {
-          actionRequest.onsuccess = () => resolve(actionRequest.result);
+          actionStore.getAll().onsuccess = (event) => resolve(event.target.result);
         }),
         new Promise(resolve => {
-          gameRequest.onsuccess = () => resolve(gameRequest.result);
+          gameStore.get(gameId).onsuccess = (event) => resolve(event.target.result);
         })
       ]).then(([actions, gameData]) => {
         const gameActions = actions.filter(action => action.game_id === gameId);
+        const playerStats = calculateBoxScore(gameActions, gameData);
         
-        // Initialize player stats with new categories
-        const playerStats = {};
-        [gameData.team1, gameData.team2].forEach(team => {
-          team.players.forEach(player => {
-            playerStats[`${team.name}-${player.number}`] = {
-              team: team.name,
-              number: player.number,
-              name: player.name,
-              ftMade: 0,
-              ftMissed: 0,
-              twoPtMade: 0,
-              twoPtMissed: 0,
-              threePtMade: 0,
-              threePtMissed: 0,
-              offRebounds: 0,
-              defRebounds: 0,
-              totalRebounds: 0,
-              fouls: 0,
-              steals: 0,
-              blocks: 0,
-              turnovers: 0,
-              totalPoints: 0
-            };
-          });
-        });
-
-        // Calculate stats
-        gameActions.forEach(action => {
-          const key = `${action.team}-${action.playerNumber}`;
-          if (!playerStats[key]) return;
-
-          const stats = playerStats[key];
-          
-          switch(action.action) {
-            case 'shot make':
-              if (action.detail1 === 'Free Throw') {
-                stats.ftMade++;
-                stats.totalPoints++;
-              } else if (action.detail1 === '2-Pointer') {
-                stats.twoPtMade++;
-                stats.totalPoints += 2;
-              } else if (action.detail1 === '3-Pointer') {
-                stats.threePtMade++;
-                stats.totalPoints += 3;
-              }
-              break;
-            case 'shot miss':
-              if (action.detail1 === 'Free Throw') {
-                stats.ftMissed++;
-              } else if (action.detail1 === '2-Pointer') {
-                stats.twoPtMissed++;
-              } else if (action.detail1 === '3-Pointer') {
-                stats.threePtMissed++;
-              }
-              break;
-            case 'rebound':
-              if (action.detail1 === 'Offensive') {
-                stats.offRebounds++;
-              } else if (action.detail1 === 'Defensive') {
-                stats.defRebounds++;
-              }
-              stats.totalRebounds = stats.offRebounds + stats.defRebounds;
-              break;
-            case 'foul':
-              stats.fouls++;
-              break;
-            case 'steal':
-              stats.steals++;
-              break;
-            case 'block':
-              stats.blocks++;
-              break;
-            case 'turnover':
-              stats.turnovers++;
-              break;
-          }
-        });
-
-        // Create CSV content with new columns
         const headers = [
           "Team", "Number", "Name", 
           "FT Made", "FT Missed",
           "2PT Made", "2PT Missed",
           "3PT Made", "3PT Missed",
+          "Total Points",
           "Off Rebounds", "Def Rebounds", "Total Rebounds",
-          "Fouls", "Steals", "Blocks", "Turnovers",
-          "Total Points"
+          "Fouls", "Steals", "Blocks", "Turnovers"
         ];
         
         let csvContent = headers.join(",") + "\n";
@@ -559,19 +482,18 @@
             stats.twoPtMissed,
             stats.threePtMade,
             stats.threePtMissed,
+            stats.totalPoints,
             stats.offRebounds,
             stats.defRebounds,
             stats.totalRebounds,
             stats.fouls,
             stats.steals,
             stats.blocks,
-            stats.turnovers,
-            stats.totalPoints
+            stats.turnovers
           ].map(value => `"${value}"`).join(",");
           csvContent += row + "\n";
         });
 
-        // Download CSV
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
         const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
@@ -583,6 +505,173 @@
         document.body.removeChild(link);
       });
     }
+
+
+    function calculateBoxScore(gameActions, gameData) {
+      const playerStats = {};
+      [gameData.team1, gameData.team2].forEach(team => {
+        team.players.forEach(player => {
+          playerStats[`${team.name}-${player.number}`] = {
+            team: team.name,
+            number: player.number,
+            name: player.name,
+            ftMade: 0,
+            ftMissed: 0,
+            twoPtMade: 0,
+            twoPtMissed: 0,
+            threePtMade: 0,
+            threePtMissed: 0,
+            offRebounds: 0,
+            defRebounds: 0,
+            totalRebounds: 0,
+            fouls: 0,
+            steals: 0,
+            blocks: 0,
+            turnovers: 0,
+            totalPoints: 0
+          };
+        });
+      });
+
+      gameActions.forEach(action => {
+        const key = `${action.team}-${action.playerNumber}`;
+        if (!playerStats[key]) return;
+
+        const stats = playerStats[key];
+        
+        switch(action.action) {
+          case 'shot make':
+            if (action.detail1 === 'Free Throw') {
+              stats.ftMade++;
+              stats.totalPoints++;
+            } else if (action.detail1 === '2-Pointer') {
+              stats.twoPtMade++;
+              stats.totalPoints += 2;
+            } else if (action.detail1 === '3-Pointer') {
+              stats.threePtMade++;
+              stats.totalPoints += 3;
+            }
+            break;
+          case 'shot miss':
+            if (action.detail1 === 'Free Throw') {
+              stats.ftMissed++;
+            } else if (action.detail1 === '2-Pointer') {
+              stats.twoPtMissed++;
+            } else if (action.detail1 === '3-Pointer') {
+              stats.threePtMissed++;
+            }
+            break;
+          case 'rebound':
+            if (action.detail1 === 'Offensive') {
+              stats.offRebounds++;
+            } else if (action.detail1 === 'Defensive') {
+              stats.defRebounds++;
+            }
+            stats.totalRebounds = stats.offRebounds + stats.defRebounds;
+            break;
+          case 'foul':
+            stats.fouls++;
+            break;
+          case 'steal':
+            stats.steals++;
+            break;
+          case 'block':
+            stats.blocks++;
+            break;
+          case 'turnover':
+            stats.turnovers++;
+            break;
+        }
+      });
+
+      return playerStats;
+    }
+
+    function showBox() {
+      const gameId = document.getElementById("game-id").value;
+      if (!gameId) {
+        alert("Please enter a Game ID to show box score");
+        return;
+      }
+
+      const transaction = db.transaction(["actions", "games"], "readonly");
+      const actionStore = transaction.objectStore("actions");
+      const gameStore = transaction.objectStore("games");
+
+      Promise.all([
+        new Promise(resolve => {
+          actionStore.getAll().onsuccess = (event) => resolve(event.target.result);
+        }),
+        new Promise(resolve => {
+          gameStore.get(gameId).onsuccess = (event) => resolve(event.target.result);
+        })
+      ]).then(([actions, gameData]) => {
+        const gameActions = actions.filter(action => action.game_id === gameId);
+        const playerStats = calculateBoxScore(gameActions, gameData);
+        
+        // Create HTML table
+        let tableHTML = `
+          <table style="border-collapse: collapse; width: 100%;">
+            <thead>
+              <tr>
+                <th style="border: 1px solid black; padding: 8px;">Team</th>
+                <th style="border: 1px solid black; padding: 8px;">#</th>
+                <th style="border: 1px solid black; padding: 8px;">Name</th>
+                <th style="border: 1px solid black; padding: 8px;">FTM</th>
+                <th style="border: 1px solid black; padding: 8px;">FTA</th>
+                <th style="border: 1px solid black; padding: 8px;">2PM</th>
+                <th style="border: 1px solid black; padding: 8px;">2PA</th>
+                <th style="border: 1px solid black; padding: 8px;">3PM</th>
+                <th style="border: 1px solid black; padding: 8px;">3PA</th>
+                <th style="border: 1px solid black; padding: 8px;">PTS</th>
+                <th style="border: 1px solid black; padding: 8px;">OREB</th>
+                <th style="border: 1px solid black; padding: 8px;">DREB</th>
+                <th style="border: 1px solid black; padding: 8px;">REB</th>
+                <th style="border: 1px solid black; padding: 8px;">F</th>
+                <th style="border: 1px solid black; padding: 8px;">STL</th>
+                <th style="border: 1px solid black; padding: 8px;">BLK</th>
+                <th style="border: 1px solid black; padding: 8px;">TO</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        Object.values(playerStats).forEach(stats => {
+          tableHTML += `
+            <tr>
+              <td style="border: 1px solid black; padding: 8px;">${stats.team}</td>
+              <td style="border: 1px solid black; padding: 8px;">${stats.number}</td>
+              <td style="border: 1px solid black; padding: 8px;">${stats.name}</td>
+              <td style="border: 1px solid black; padding: 8px;">${stats.ftMade}</td>
+              <td style="border: 1px solid black; padding: 8px;">${stats.ftMade + stats.ftMissed}</td>
+              <td style="border: 1px solid black; padding: 8px;">${stats.twoPtMade}</td>
+              <td style="border: 1px solid black; padding: 8px;">${stats.twoPtMade + stats.twoPtMissed}</td>
+              <td style="border: 1px solid black; padding: 8px;">${stats.threePtMade}</td>
+              <td style="border: 1px solid black; padding: 8px;">${stats.threePtMade + stats.threePtMissed}</td>
+              <td style="border: 1px solid black; padding: 8px;">${stats.totalPoints}</td>
+              <td style="border: 1px solid black; padding: 8px;">${stats.offRebounds}</td>
+              <td style="border: 1px solid black; padding: 8px;">${stats.defRebounds}</td>
+              <td style="border: 1px solid black; padding: 8px;">${stats.totalRebounds}</td>
+              <td style="border: 1px solid black; padding: 8px;">${stats.fouls}</td>
+              <td style="border: 1px solid black; padding: 8px;">${stats.steals}</td>
+              <td style="border: 1px solid black; padding: 8px;">${stats.blocks}</td>
+              <td style="border: 1px solid black; padding: 8px;">${stats.turnovers}</td>
+            </tr>
+          `;
+        });
+
+        tableHTML += '</tbody></table>';
+        
+        const boxScoreDiv = document.getElementById('boxScoreTable');
+        boxScoreDiv.innerHTML = tableHTML;
+        boxScoreDiv.style.display = 'block';
+      });
+    }
+
+    function hideBox() {
+      document.getElementById('boxScoreTable').style.display = 'none';
+    }
+
 
     // Game Setup Functions
     function addPlayerRow(team) {
