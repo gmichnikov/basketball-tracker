@@ -706,12 +706,29 @@
         const team1Stats = Object.values(playerStats).filter(stats => stats.team === gameData.team1.name);
         const team2Stats = Object.values(playerStats).filter(stats => stats.team === gameData.team2.name);
 
-        // Function to create table HTML
         function createTableHTML(teamName, teamStats) {
           const teamScore = teamStats.reduce((sum, player) => sum + player.totalPoints, 0);
 
+          // Calculate team totals
+          const teamTotals = {
+            ftMade: teamStats.reduce((sum, player) => sum + player.ftMade, 0),
+            ftAttempts: teamStats.reduce((sum, player) => sum + player.ftMade + player.ftMissed, 0),
+            twoPtMade: teamStats.reduce((sum, player) => sum + player.twoPtMade, 0),
+            twoPtAttempts: teamStats.reduce((sum, player) => sum + player.twoPtMade + player.twoPtMissed, 0),
+            threePtMade: teamStats.reduce((sum, player) => sum + player.threePtMade, 0),
+            threePtAttempts: teamStats.reduce((sum, player) => sum + player.threePtMade + player.threePtMissed, 0),
+            points: teamScore,
+            offRebounds: teamStats.reduce((sum, player) => sum + player.offRebounds, 0),
+            defRebounds: teamStats.reduce((sum, player) => sum + player.defRebounds, 0),
+            totalRebounds: teamStats.reduce((sum, player) => sum + player.totalRebounds, 0),
+            fouls: teamStats.reduce((sum, player) => sum + player.fouls, 0),
+            steals: teamStats.reduce((sum, player) => sum + player.steals, 0),
+            blocks: teamStats.reduce((sum, player) => sum + player.blocks, 0),
+            turnovers: teamStats.reduce((sum, player) => sum + player.turnovers, 0)
+          };
+
           let tableHTML = `
-            <h3>${teamName} - ${teamScore}</h3>
+            <h3>${teamName} - ${teamScore} points</h3>
             <table style="border-collapse: collapse; width: 100%; margin-bottom: 20px;">
               <thead>
                 <tr>
@@ -759,9 +776,32 @@
             `;
           });
 
+          // Add team totals row
+          tableHTML += `
+            <tr style="font-weight: bold; background-color: #f2f2f2;">
+              <td style="border: 1px solid black; padding: 8px;"></td>
+              <td style="border: 1px solid black; padding: 8px;">Team Totals</td>
+              <td style="border: 1px solid black; padding: 8px;">${teamTotals.ftMade}</td>
+              <td style="border: 1px solid black; padding: 8px;">${teamTotals.ftAttempts}</td>
+              <td style="border: 1px solid black; padding: 8px;">${teamTotals.twoPtMade}</td>
+              <td style="border: 1px solid black; padding: 8px;">${teamTotals.twoPtAttempts}</td>
+              <td style="border: 1px solid black; padding: 8px;">${teamTotals.threePtMade}</td>
+              <td style="border: 1px solid black; padding: 8px;">${teamTotals.threePtAttempts}</td>
+              <td style="border: 1px solid black; padding: 8px;">${teamTotals.points}</td>
+              <td style="border: 1px solid black; padding: 8px;">${teamTotals.offRebounds}</td>
+              <td style="border: 1px solid black; padding: 8px;">${teamTotals.defRebounds}</td>
+              <td style="border: 1px solid black; padding: 8px;">${teamTotals.totalRebounds}</td>
+              <td style="border: 1px solid black; padding: 8px;">${teamTotals.fouls}</td>
+              <td style="border: 1px solid black; padding: 8px;">${teamTotals.steals}</td>
+              <td style="border: 1px solid black; padding: 8px;">${teamTotals.blocks}</td>
+              <td style="border: 1px solid black; padding: 8px;">${teamTotals.turnovers}</td>
+            </tr>
+          `;
+
           tableHTML += '</tbody></table>';
           return tableHTML;
         }
+
 
         const boxScoreDiv = document.getElementById('boxScoreTable');
         boxScoreDiv.innerHTML =
