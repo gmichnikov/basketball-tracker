@@ -714,6 +714,14 @@
         function createTableHTML(teamName, teamStats) {
           const teamScore = teamStats.reduce((sum, player) => sum + player.totalPoints, 0);
 
+          const currentPeriod = document.getElementById('period').value;
+          const currentPeriodFouls = gameActions
+            .filter(action => 
+              action.team === teamName && 
+              action.action === 'foul' && 
+              action.period === currentPeriod
+            ).length;
+
           // Calculate team totals
           const teamTotals = {
             ftMade: teamStats.reduce((sum, player) => sum + player.ftMade, 0),
@@ -733,7 +741,7 @@
           };
 
           let tableHTML = `
-            <h3>${teamName} - ${teamScore} points</h3>
+            <h3>${teamName} - ${teamScore} points - ${currentPeriodFouls} Fouls in Period ${currentPeriod}</h3>
             <table style="border-collapse: collapse; width: 100%; margin-bottom: 20px;">
               <thead>
                 <tr>
