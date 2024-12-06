@@ -165,21 +165,20 @@
       }
     }
 
-
     function showPlayerButtons() {
       const playersContainer = document.getElementById("players");
-      playersContainer.innerHTML = ""; // Clear existing buttons
-    
+      playersContainer.innerHTML = "";
+
       const transaction = db.transaction("games", "readonly");
       const store = transaction.objectStore("games");
       const gameId = document.getElementById("game-id").value;
-    
+
       if (!gameId) {
         alert("Please enter and load a valid Game ID before tracking.");
         resetUI();
         return;
       }
-    
+
       const request = store.get(gameId);
       request.onsuccess = (event) => {
         const gameData = event.target.result;
@@ -188,53 +187,58 @@
           resetUI();
           return;
         }
-    
-        // Create buttons for Team 1 players
+
+        // Team 1 section
         const team1Header = document.createElement("h4");
         team1Header.textContent = gameData.team1.name || "Team 1";
         playersContainer.appendChild(team1Header);
-    
-        // "Team" button for Team 1
+
+        // Team 1 "Team" button
         const team1Button = document.createElement("button");
         team1Button.textContent = "Team";
         team1Button.onclick = () => recordAction(gameData.team1.name, null);
         playersContainer.appendChild(team1Button);
 
+        // Team 1 player buttons
         gameData.team1.players.forEach(player => {
-          const button = document.createElement("button");
-          const status = player.status === "in" ? " (In)" : " (Out)";
-          button.textContent = `${player.number || ""} ${player.name || ""}${status}`.trim();
-          button.onclick = () => recordAction(gameData.team1.name, player.number);
-          playersContainer.appendChild(button);
+          if ((currentAction === "sub in" && player.status !== "in") || 
+              (currentAction !== "sub in" && player.status === "in")) {
+            const button = document.createElement("button");
+            button.textContent = `${player.number || ""} ${player.name || ""}`.trim();
+            button.onclick = () => recordAction(gameData.team1.name, player.number);
+            playersContainer.appendChild(button);
+          }
         });
-    
-        // Create buttons for Team 2 players
+
+        // Team 2 section
         const team2Header = document.createElement("h4");
         team2Header.textContent = gameData.team2.name || "Team 2";
         playersContainer.appendChild(team2Header);
 
-        // "Team" button for Team 2
+        // Team 2 "Team" button
         const team2Button = document.createElement("button");
         team2Button.textContent = "Team";
         team2Button.onclick = () => recordAction(gameData.team2.name, null);
         playersContainer.appendChild(team2Button);
 
+        // Team 2 player buttons
         gameData.team2.players.forEach(player => {
-          const button = document.createElement("button");
-          const status = player.status === "in" ? " (In)" : " (Out)";
-          button.textContent = `${player.number || ""} ${player.name || ""}${status}`.trim();
-          button.onclick = () => recordAction(gameData.team2.name, player.number);
-          playersContainer.appendChild(button);
+          if ((currentAction === "sub in" && player.status !== "in") || 
+              (currentAction !== "sub in" && player.status === "in")) {
+            const button = document.createElement("button");
+            button.textContent = `${player.number || ""} ${player.name || ""}`.trim();
+            button.onclick = () => recordAction(gameData.team2.name, player.number);
+            playersContainer.appendChild(button);
+          }
         });
-    
+
         // Add "Start Over" button
         const startOverButton = document.createElement("button");
         startOverButton.textContent = "Start Over";
         startOverButton.classList.add("cancel-btn");
         startOverButton.onclick = resetUI;
         playersContainer.appendChild(startOverButton);
-    
-        // Show player section
+
         playersContainer.style.display = "block";
       };
     }
