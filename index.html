@@ -142,6 +142,7 @@
       <button onclick="selectAction('shot make')">Shot Make</button>
       <button onclick="selectAction('shot miss')">Shot Miss</button>
       <button onclick="selectAction('rebound')">Rebound</button>
+      <button onclick="selectAction('assist')">Assist</button>
       <button onclick="selectAction('block')">Block</button>
       <button onclick="selectAction('steal')">Steal</button>
       <button onclick="selectAction('turnover')">Turnover</button>
@@ -591,7 +592,7 @@
           "3PT Made", "3PT Attempted",
           "Total Points",
           "Off Rebounds", "Def Rebounds", "Total Rebounds",
-          "Fouls", "Steals", "Blocks", "Turnovers"
+          "Fouls", "Assists", "Steals", "Blocks", "Turnovers"
         ];
 
         let csvContent = headers.join(",") + "\n";
@@ -612,6 +613,7 @@
             stats.defRebounds,
             stats.totalRebounds,
             stats.fouls,
+            stats.assists,
             stats.steals,
             stats.blocks,
             stats.turnovers
@@ -649,6 +651,7 @@
             defRebounds: 0,
             totalRebounds: 0,
             fouls: 0,
+            assists: 0,
             steals: 0,
             blocks: 0,
             turnovers: 0,
@@ -695,6 +698,9 @@
             break;
           case 'foul':
             stats.fouls++;
+            break;
+          case 'assist':
+            stats.assists++;
             break;
           case 'steal':
             stats.steals++;
@@ -761,6 +767,7 @@
             defRebounds: teamStats.reduce((sum, player) => sum + player.defRebounds, 0),
             totalRebounds: teamStats.reduce((sum, player) => sum + player.totalRebounds, 0),
             fouls: teamStats.reduce((sum, player) => sum + player.fouls, 0),
+            assists: teamStats.reduce((sum, player) => sum + player.assists, 0),
             steals: teamStats.reduce((sum, player) => sum + player.steals, 0),
             blocks: teamStats.reduce((sum, player) => sum + player.blocks, 0),
             turnovers: teamStats.reduce((sum, player) => sum + player.turnovers, 0)
@@ -798,6 +805,7 @@
                 <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${stats.totalPoints}</td>
                 <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${stats.offRebounds}/${stats.defRebounds}/${stats.totalRebounds}</td>
                 <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${stats.fouls}</td>
+                <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${stats.assists}</td>
                 <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${stats.steals}</td>
                 <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${stats.blocks}</td>
                 <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${stats.turnovers}</td>
@@ -816,6 +824,7 @@
               <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${teamTotals.points}</td>
               <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${teamTotals.offRebounds}/${teamTotals.defRebounds}/${teamTotals.totalRebounds}</td>
               <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${teamTotals.fouls}</td>
+              <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${teamTotals.assists}</td>
               <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${teamTotals.steals}</td>
               <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${teamTotals.blocks}</td>
               <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${teamTotals.turnovers}</td>
