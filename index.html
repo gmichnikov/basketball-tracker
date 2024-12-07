@@ -89,6 +89,11 @@
       width: 80px;
       padding: 5px;
     }
+
+    #players button {
+      margin: 5px;
+      /* Adds 5px margin on all sides */
+    }
   </style>
 </head>
 
@@ -204,9 +209,9 @@
       }
     };
 
-    request.onsuccess = (event) => { 
+    request.onsuccess = (event) => {
       db = event.target.result;
-      
+
       // Get most recent game ID
       const transaction = db.transaction("actions", "readonly");
       const store = transaction.objectStore("actions");
@@ -215,7 +220,7 @@
       request.onsuccess = (event) => {
         const actions = event.target.result;
         if (actions && actions.length > 0) {
-          const mostRecent = actions.sort((a, b) => 
+          const mostRecent = actions.sort((a, b) =>
             new Date(b.timestamp) - new Date(a.timestamp)
           )[0];
           document.getElementById('game-id').value = mostRecent.game_id;
@@ -716,9 +721,9 @@
 
           const currentPeriod = document.getElementById('period').value;
           const currentPeriodFouls = gameActions
-            .filter(action => 
-              action.team === teamName && 
-              action.action === 'foul' && 
+            .filter(action =>
+              action.team === teamName &&
+              action.action === 'foul' &&
               action.period === currentPeriod
             ).length;
 
@@ -742,21 +747,16 @@
 
           let tableHTML = `
             <h3>${teamName} - ${teamScore} points - ${currentPeriodFouls} Fouls in Period ${currentPeriod}</h3>
-            <table style="border-collapse: collapse; width: 100%; margin-bottom: 20px;">
+            <table style="border-collapse: collapse; display: inline-block; margin-bottom: 20px;">
               <thead>
                 <tr>
                   <th style="border: 1px solid black; padding: 8px;">#</th>
                   <th style="border: 1px solid black; padding: 8px;">Name</th>
-                  <th style="border: 1px solid black; padding: 8px;">FTM</th>
-                  <th style="border: 1px solid black; padding: 8px;">FTA</th>
-                  <th style="border: 1px solid black; padding: 8px;">2PM</th>
-                  <th style="border: 1px solid black; padding: 8px;">2PA</th>
-                  <th style="border: 1px solid black; padding: 8px;">3PM</th>
-                  <th style="border: 1px solid black; padding: 8px;">3PA</th>
+                  <th style="border: 1px solid black; padding: 8px;">FT</th>
+                  <th style="border: 1px solid black; padding: 8px;">2PT</th>
+                  <th style="border: 1px solid black; padding: 8px;">3PT</th>
                   <th style="border: 1px solid black; padding: 8px;">PTS</th>
-                  <th style="border: 1px solid black; padding: 8px;">OREB</th>
-                  <th style="border: 1px solid black; padding: 8px;">DREB</th>
-                  <th style="border: 1px solid black; padding: 8px;">REB</th>
+                  <th style="border: 1px solid black; padding: 8px;">O/D/REB</th>
                   <th style="border: 1px solid black; padding: 8px;">F</th>
                   <th style="border: 1px solid black; padding: 8px;">STL</th>
                   <th style="border: 1px solid black; padding: 8px;">BLK</th>
@@ -769,22 +769,17 @@
           teamStats.forEach(stats => {
             tableHTML += `
               <tr>
-                <td style="border: 1px solid black; padding: 8px;">${stats.number}</td>
-                <td style="border: 1px solid black; padding: 8px;">${stats.name}</td>
-                <td style="border: 1px solid black; padding: 8px;">${stats.ftMade}</td>
-                <td style="border: 1px solid black; padding: 8px;">${stats.ftMade + stats.ftMissed}</td>
-                <td style="border: 1px solid black; padding: 8px;">${stats.twoPtMade}</td>
-                <td style="border: 1px solid black; padding: 8px;">${stats.twoPtMade + stats.twoPtMissed}</td>
-                <td style="border: 1px solid black; padding: 8px;">${stats.threePtMade}</td>
-                <td style="border: 1px solid black; padding: 8px;">${stats.threePtMade + stats.threePtMissed}</td>
-                <td style="border: 1px solid black; padding: 8px;">${stats.totalPoints}</td>
-                <td style="border: 1px solid black; padding: 8px;">${stats.offRebounds}</td>
-                <td style="border: 1px solid black; padding: 8px;">${stats.defRebounds}</td>
-                <td style="border: 1px solid black; padding: 8px;">${stats.totalRebounds}</td>
-                <td style="border: 1px solid black; padding: 8px;">${stats.fouls}</td>
-                <td style="border: 1px solid black; padding: 8px;">${stats.steals}</td>
-                <td style="border: 1px solid black; padding: 8px;">${stats.blocks}</td>
-                <td style="border: 1px solid black; padding: 8px;">${stats.turnovers}</td>
+                <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${stats.number}</td>
+                <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${stats.name}</td>
+                <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${stats.ftMade}-${stats.ftMade + stats.ftMissed}</td>
+                <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${stats.twoPtMade}-${stats.twoPtMade + stats.twoPtMissed}</td>
+                <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${stats.threePtMade}-${stats.threePtMade + stats.threePtMissed}</td>
+                <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${stats.totalPoints}</td>
+                <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${stats.offRebounds}/${stats.defRebounds}/${stats.totalRebounds}</td>
+                <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${stats.fouls}</td>
+                <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${stats.steals}</td>
+                <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${stats.blocks}</td>
+                <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${stats.turnovers}</td>
               </tr>
             `;
           });
@@ -792,22 +787,17 @@
           // Add team totals row
           tableHTML += `
             <tr style="font-weight: bold; background-color: #f2f2f2;">
-              <td style="border: 1px solid black; padding: 8px;"></td>
-              <td style="border: 1px solid black; padding: 8px;">Team Totals</td>
-              <td style="border: 1px solid black; padding: 8px;">${teamTotals.ftMade}</td>
-              <td style="border: 1px solid black; padding: 8px;">${teamTotals.ftAttempts}</td>
-              <td style="border: 1px solid black; padding: 8px;">${teamTotals.twoPtMade}</td>
-              <td style="border: 1px solid black; padding: 8px;">${teamTotals.twoPtAttempts}</td>
-              <td style="border: 1px solid black; padding: 8px;">${teamTotals.threePtMade}</td>
-              <td style="border: 1px solid black; padding: 8px;">${teamTotals.threePtAttempts}</td>
-              <td style="border: 1px solid black; padding: 8px;">${teamTotals.points}</td>
-              <td style="border: 1px solid black; padding: 8px;">${teamTotals.offRebounds}</td>
-              <td style="border: 1px solid black; padding: 8px;">${teamTotals.defRebounds}</td>
-              <td style="border: 1px solid black; padding: 8px;">${teamTotals.totalRebounds}</td>
-              <td style="border: 1px solid black; padding: 8px;">${teamTotals.fouls}</td>
-              <td style="border: 1px solid black; padding: 8px;">${teamTotals.steals}</td>
-              <td style="border: 1px solid black; padding: 8px;">${teamTotals.blocks}</td>
-              <td style="border: 1px solid black; padding: 8px;">${teamTotals.turnovers}</td>
+              <td style="border: 1px solid black; padding: 8px; white-space: nowrap;"></td>
+              <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">Team Totals</td>
+              <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${teamTotals.ftMade}-${teamTotals.ftAttempts}</td>
+              <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${teamTotals.twoPtMade}-${teamTotals.twoPtAttempts}</td>
+              <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${teamTotals.threePtMade}-${teamTotals.threePtAttempts}</td>
+              <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${teamTotals.points}</td>
+              <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${teamTotals.offRebounds}/${teamTotals.defRebounds}/${teamTotals.totalRebounds}</td>
+              <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${teamTotals.fouls}</td>
+              <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${teamTotals.steals}</td>
+              <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${teamTotals.blocks}</td>
+              <td style="border: 1px solid black; padding: 8px; white-space: nowrap;">${teamTotals.turnovers}</td>
             </tr>
           `;
 
