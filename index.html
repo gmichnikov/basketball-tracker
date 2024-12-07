@@ -92,7 +92,34 @@
 
     #players button {
       margin: 5px;
-      /* Adds 5px margin on all sides */
+      padding: 8px 12px;
+      font-size: 16px;
+    }
+
+    .game-setup-controls {
+      margin: 20px 0;
+      display: flex;
+      gap: 10px;
+    }
+
+    .game-setup-form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin: 20px 0;
+    }
+
+    .game-setup-form label {
+      display: inline-block;
+      width: 100px;
+    }
+
+    .game-setup-form input {
+      padding: 5px;
+    }
+
+    .team-section input[type="text"] {
+      margin-bottom: 15px;
     }
   </style>
 </head>
@@ -143,7 +170,7 @@
       <button class="cancel-btn" onclick="resetUI()">Start Over</button>
     </div>
 
-    <button style="margin-top: 20px;" onclick="printActionDatabase()">Print Action Database</button>
+    <!-- <button style="margin-top: 20px;" onclick="printActionDatabase()">Print Action Database</button> -->
     <!-- <button style="margin-top: 20px;" onclick="clearActionDatabase()">Clear Action Database</button> -->
     <button style="margin-top: 20px;" onclick="exportToCSV()">Export Actions</button>
     <button style="margin-top: 20px;" onclick="exportBoxScore()">Export Box Score</button>
@@ -159,22 +186,32 @@
   <div id="game-setup" class="content active">
     <h2>Game Setup</h2>
 
-    <br>
-    <button onclick="saveGame()">Save</button>
-    <button onclick="loadGame()">Load</button>
-    <button onclick="clearFields()">Clear</button>
-    <button style="margin-top: 20px;" onclick="printGameDatabase()">Print Game Database</button>
-    <!-- <button style="margin-top: 20px;" onclick="clearGameDatabase()">Clear Game Database</button> -->
-    <br>
+    <div class="game-setup-controls">
+      <button onclick="saveGame()">Save</button>
+      <button onclick="loadGame()">Load</button>
+      <button onclick="clearFields()">Clear</button>
+      <!-- <button style="margin-top: 20px;" onclick="printGameDatabase()">Print Game Database</button> -->
+      <!-- <button style="margin-top: 20px;" onclick="clearGameDatabase()">Clear Game Database</button> -->
+    </div>
 
-    <label for="game-id">Game ID:</label>
-    <input type="text" id="game-id" placeholder="Enter Game ID"><br>
-    <label for="period">Period:</label>
-    <input type="number" id="period" min="1" value="1"><br>
-    <label for="game-date">Date:</label>
-    <input type="date" id="game-date"><br>
-    <label for="game-location">Location:</label>
-    <input type="text" id="game-location" placeholder="Enter Location"><br>
+    <div class="game-setup-form">
+      <div>
+        <label for="game-id">Game ID:</label>
+        <input type="text" id="game-id" placeholder="Enter Game ID">
+      </div>
+      <div>
+        <label for="period">Period:</label>
+        <input type="number" id="period" min="1" value="1">
+      </div>
+      <div>
+        <label for="game-date">Date:</label>
+        <input type="date" id="game-date">
+      </div>
+      <div>
+        <label for="game-location">Location:</label>
+        <input type="text" id="game-location" placeholder="Enter Location">
+      </div>
+    </div>
 
     <div class="team-section">
       <h3>Team 1</h3>
@@ -295,12 +332,6 @@
         team1Header.textContent = gameData.team1.name || "Team 1";
         playersContainer.appendChild(team1Header);
 
-        // Team 1 "Team" button
-        const team1Button = document.createElement("button");
-        team1Button.textContent = "Team";
-        team1Button.onclick = () => recordAction(gameData.team1.name, null);
-        playersContainer.appendChild(team1Button);
-
         // Team 1 player buttons
         gameData.team1.players
           .sort((a, b) => Number(a.number) - Number(b.number))
@@ -314,16 +345,16 @@
             }
           });
 
+        // Team 1 "Team" button
+        const team1Button = document.createElement("button");
+        team1Button.textContent = "Team";
+        team1Button.onclick = () => recordAction(gameData.team1.name, null);
+        playersContainer.appendChild(team1Button);
+
         // Team 2 section
         const team2Header = document.createElement("h4");
         team2Header.textContent = gameData.team2.name || "Team 2";
         playersContainer.appendChild(team2Header);
-
-        // Team 2 "Team" button
-        const team2Button = document.createElement("button");
-        team2Button.textContent = "Team";
-        team2Button.onclick = () => recordAction(gameData.team2.name, null);
-        playersContainer.appendChild(team2Button);
 
         // Team 2 player buttons
         gameData.team2.players
@@ -337,6 +368,12 @@
               playersContainer.appendChild(button);
             }
           });
+
+        // Team 2 "Team" button
+        const team2Button = document.createElement("button");
+        team2Button.textContent = "Team";
+        team2Button.onclick = () => recordAction(gameData.team2.name, null);
+        playersContainer.appendChild(team2Button);
 
         // Add "Start Over" button
         const startOverButton = document.createElement("button");
@@ -367,7 +404,7 @@
       document.getElementById("details").style.display = "none";
       showPlayerButtons();
     }
-    
+
     function recordAction(teamName, jerseyNumber) {
       const gameId = document.getElementById("game-id").value;
       const period = document.getElementById("period").value;
