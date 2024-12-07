@@ -258,8 +258,6 @@
         showDetailOptions("Points", ["Free Throw", "2-Pointer", "3-Pointer"]);
       } else if (action === "rebound") {
         showDetailOptions("Rebound Type", ["Offensive", "Defensive"]);
-      } else if (action === "turnover") {
-        showDetailOptions("Turnover Type", ["Ball Stolen", "Traveling", "Out of Bounds", "Double Dribble", "Other"]);
       } else if (action === "foul") {
         showDetailOptions("Foul Type", ["Offensive", "Defensive"]);
       } else if (action === "record game time") {
@@ -365,31 +363,11 @@
     }
 
     function handleDetailSelection(option) {
-      if (!detail1) {
-        detail1 = option;
-        if (currentAction.startsWith("shot") && detail1 === "2-Pointer") {
-          showDetailOptions("Shot Type", [
-            "Lay Up", "Paint - Near", "Paint - Far",
-            "Mid-Range - Left Baseline", "Mid-Range - Right Baseline",
-            "Mid-Range - Left Wing", "Mid-Range - Right Wing",
-            "Mid-Range - Top of the Key"
-          ]);
-        } else if (currentAction.startsWith("shot") && detail1 === "3-Pointer") {
-          showDetailOptions("Shot Type", [
-            "Three-Point - Left Corner", "Three-Point - Right Corner",
-            "Three-Point - Left Wing", "Three-Point - Right Wing",
-            "Three-Point - Top of the Arc"
-          ]);
-        } else {
-          document.getElementById("details").style.display = "none";
-          showPlayerButtons(); // Show player buttons after first-level detail
-        }
-      } else {
-        detail2 = option;
-        document.getElementById("details").style.display = "none";
-        showPlayerButtons(); // Show player buttons after second-level detail
-      }
+      detail1 = option;
+      document.getElementById("details").style.display = "none";
+      showPlayerButtons();
     }
+    
     function recordAction(teamName, jerseyNumber) {
       const gameId = document.getElementById("game-id").value;
       const period = document.getElementById("period").value;
