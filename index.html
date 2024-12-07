@@ -304,15 +304,17 @@
         playersContainer.appendChild(team1Button);
 
         // Team 1 player buttons
-        gameData.team1.players.forEach(player => {
-          if ((currentAction === "sub in" && player.status !== "in") ||
-            (currentAction !== "sub in" && player.status === "in")) {
-            const button = document.createElement("button");
-            button.textContent = `${player.number || ""} ${player.name || ""}`.trim();
-            button.onclick = () => recordAction(gameData.team1.name, player.number);
-            playersContainer.appendChild(button);
-          }
-        });
+        gameData.team1.players
+          .sort((a, b) => Number(a.number) - Number(b.number))
+          .forEach(player => {
+            if ((currentAction === "sub in" && player.status !== "in") ||
+              (currentAction !== "sub in" && player.status === "in")) {
+              const button = document.createElement("button");
+              button.textContent = `${player.number || ""} ${player.name || ""}`.trim();
+              button.onclick = () => recordAction(gameData.team1.name, player.number);
+              playersContainer.appendChild(button);
+            }
+          });
 
         // Team 2 section
         const team2Header = document.createElement("h4");
@@ -326,15 +328,17 @@
         playersContainer.appendChild(team2Button);
 
         // Team 2 player buttons
-        gameData.team2.players.forEach(player => {
-          if ((currentAction === "sub in" && player.status !== "in") ||
-            (currentAction !== "sub in" && player.status === "in")) {
-            const button = document.createElement("button");
-            button.textContent = `${player.number || ""} ${player.name || ""}`.trim();
-            button.onclick = () => recordAction(gameData.team2.name, player.number);
-            playersContainer.appendChild(button);
-          }
-        });
+        gameData.team2.players
+          .sort((a, b) => Number(a.number) - Number(b.number))
+          .forEach(player => {
+            if ((currentAction === "sub in" && player.status !== "in") ||
+              (currentAction !== "sub in" && player.status === "in")) {
+              const button = document.createElement("button");
+              button.textContent = `${player.number || ""} ${player.name || ""}`.trim();
+              button.onclick = () => recordAction(gameData.team2.name, player.number);
+              playersContainer.appendChild(button);
+            }
+          });
 
         // Add "Start Over" button
         const startOverButton = document.createElement("button");
