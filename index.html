@@ -141,15 +141,15 @@
     <div class="button-grid" id="actions">
       <button onclick="selectAction('shot make')">Shot Make</button>
       <button onclick="selectAction('shot miss')">Shot Miss</button>
-      <button onclick="selectAction('rebound')">Rebound</button>
+      <!-- <button onclick="selectAction('rebound')">Rebound</button>
       <button onclick="selectAction('assist')">Assist</button>
       <button onclick="selectAction('block')">Block</button>
-      <button onclick="selectAction('steal')">Steal</button>
+      <button onclick="selectAction('steal')">Steal</button> -->
       <button onclick="selectAction('turnover')">Turnover</button>
       <button onclick="selectAction('foul')">Foul</button>
-      <button onclick="selectAction('sub in')">Sub In</button>
+      <!-- <button onclick="selectAction('sub in')">Sub In</button>
       <button onclick="selectAction('sub out')">Sub Out</button>
-      <button onclick="selectAction('record game time')">Record Game Time</button>
+      <button onclick="selectAction('record game time')">Record Game Time</button> -->
     </div>
 
     <!-- Detail Selection -->
@@ -333,50 +333,42 @@
         team1Header.textContent = gameData.team1.name || "Team 1";
         playersContainer.appendChild(team1Header);
 
-        // Team 1 player buttons
+        // Team 1 player buttons - show all players
         gameData.team1.players
           .sort((a, b) => Number(a.number) - Number(b.number))
           .forEach(player => {
-            if ((currentAction === "sub in" && player.status !== "in") ||
-              (currentAction !== "sub in" && player.status === "in")) {
-              const button = document.createElement("button");
-              button.textContent = `${player.number || ""} ${player.name || ""}`.trim();
-              button.onclick = () => recordAction(gameData.team1.name, player.number);
-              playersContainer.appendChild(button);
-            }
+            const button = document.createElement("button");
+            button.textContent = `${player.number || ""} ${player.name || ""}`.trim();
+            button.onclick = () => recordAction(gameData.team1.name, player.number);
+            playersContainer.appendChild(button);
           });
 
         // Team 1 "Team" button
-        if (!currentAction.includes("sub")) {
-          const team1Button = document.createElement("button");
-          team1Button.textContent = "Team";
-          team1Button.onclick = () => recordAction(gameData.team1.name, null);
-          playersContainer.appendChild(team1Button);
-        }
+        const team1Button = document.createElement("button");
+        team1Button.textContent = "Team";
+        team1Button.onclick = () => recordAction(gameData.team1.name, null);
+        playersContainer.appendChild(team1Button);
+
         // Team 2 section
         const team2Header = document.createElement("h4");
         team2Header.textContent = gameData.team2.name || "Team 2";
         playersContainer.appendChild(team2Header);
 
-        // Team 2 player buttons
+        // Team 2 player buttons - show all players
         gameData.team2.players
           .sort((a, b) => Number(a.number) - Number(b.number))
           .forEach(player => {
-            if ((currentAction === "sub in" && player.status !== "in") ||
-              (currentAction !== "sub in" && player.status === "in")) {
-              const button = document.createElement("button");
-              button.textContent = `${player.number || ""} ${player.name || ""}`.trim();
-              button.onclick = () => recordAction(gameData.team2.name, player.number);
-              playersContainer.appendChild(button);
-            }
+            const button = document.createElement("button");
+            button.textContent = `${player.number || ""} ${player.name || ""}`.trim();
+            button.onclick = () => recordAction(gameData.team2.name, player.number);
+            playersContainer.appendChild(button);
           });
 
-        if (!currentAction.includes("sub")) {
-          const team2Button = document.createElement("button");
-          team2Button.textContent = "Team";
-          team2Button.onclick = () => recordAction(gameData.team2.name, null);
-          playersContainer.appendChild(team2Button);
-        }
+        // Team 2 "Team" button
+        const team2Button = document.createElement("button");
+        team2Button.textContent = "Team";
+        team2Button.onclick = () => recordAction(gameData.team2.name, null);
+        playersContainer.appendChild(team2Button);
 
         // Add "Start Over" button
         const startOverButton = document.createElement("button");
